@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "nexus-app",
+    "name": "Nexus",
     "slug": "nexus-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,7 +11,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#3E4A26",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,7 +19,22 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "static",
+      "name": "Nexus App Demo",
+      "shortName": "Nexus",
+      "themeColor": "#3E4A26",
+      "backgroundColor": "#3E4A26"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "scheme": "nexus",
+    "backgroundColor": "#F2EEE4",
+    "experiments": {
+      "baseUrl": "/nexus-app",
+      "typedRoutes": true
     }
   }
 }
