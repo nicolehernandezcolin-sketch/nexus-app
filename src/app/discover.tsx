@@ -82,7 +82,7 @@ function CreatorTile({ creator: c }: { creator: Creator }) {
   return (
     <Tap
       accessibilityRole="button"
-      onPress={() => showToast(`**${c.name}** is ${c.openTo.toLowerCase()}. In the full app you’d see their boards here.`)}
+      onPress={() => showToast(`**${c.name}** is ${c.openTo.toLowerCase()}. In the full app you’d see their work here.`)}
       style={styles.tile}
     >
       <ArtBlock art={c.art} radius={0} />

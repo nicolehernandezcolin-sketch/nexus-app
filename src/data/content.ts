@@ -159,13 +159,97 @@ export const profile = {
   tagline: 'Artist, producer, founder · San Diego',
   bio: 'Performing and producing as Destined Echo. Building spaces where creatives meet in real life through Nexus. English y español.',
   openTo: ['Band members', 'Music video crews', 'Event partners'],
-  boards: [
-    { title: 'Layers', detail: 'Album · Destined Echo', art: { bg: colors.forest, fg: colors.lime, height: 150, label: 'Album art' } },
-    { title: 'Pa Ya', detail: 'Short film · Nexus Film Fest', art: { bg: colors.lime, fg: colors.ink, height: 150, label: 'Film still' } },
-    { title: 'Layers Reimagined', detail: 'Live show · Quartyard SD', art: { bg: colors.sand, fg: colors.forest, height: 110, label: 'Show photo' } },
-    { title: 'Nexus events', detail: 'Organizer', art: { bg: colors.ink, fg: colors.lime, height: 110, label: 'Event photo' } },
-  ],
   metAt: ['Nexus Film Festival', 'UC Series at UCSD'],
+};
+
+export type WorkItem = { title: string; detail: string; art: Art };
+export type WorkModule = { id: string; title: string; blurb: string; items: WorkItem[] };
+
+// The profile's work, grouped into modules the owner can reorder, hide and collapse.
+export const workModules: WorkModule[] = [
+  {
+    id: 'music',
+    title: 'Music',
+    blurb: 'Records and releases as Destined Echo',
+    items: [
+      { title: 'Layers', detail: 'Album · Destined Echo', art: { bg: colors.forest, fg: colors.lime, height: 140, label: 'Album art' } },
+      { title: 'Layers Reimagined', detail: 'Live recording', art: { bg: colors.olive, fg: colors.cream, height: 140, label: 'Cover' } },
+    ],
+  },
+  {
+    id: 'film',
+    title: 'Film',
+    blurb: 'Short films and music videos',
+    items: [
+      { title: 'Pa Ya', detail: 'Short film · Nexus Film Fest', art: { bg: colors.lime, fg: colors.ink, height: 140, label: 'Film still' } },
+    ],
+  },
+  {
+    id: 'live',
+    title: 'Live shows',
+    blurb: 'Stages and sets',
+    items: [
+      { title: 'Layers Reimagined', detail: 'Live show · Quartyard SD', art: { bg: colors.sand, fg: colors.forest, height: 140, label: 'Show photo' } },
+      { title: 'Latin Jazz Night', detail: 'Nexus music series', art: { bg: colors.ink, fg: colors.lime, height: 140, label: 'Show photo' } },
+    ],
+  },
+  {
+    id: 'events',
+    title: 'Events I organize',
+    blurb: 'Nexus nights, festivals and series',
+    items: [
+      { title: 'Nexus Film Festival', detail: 'Founder · 1st Edition', art: { bg: colors.forest, fg: colors.lime, height: 140, label: 'Event photo' } },
+      { title: 'UC Series', detail: 'Monthly · UC San Diego', art: { bg: colors.stone, fg: colors.forest, height: 140, label: 'Event photo' } },
+      { title: 'Nex Up', detail: 'New artist showcase', art: { bg: colors.lime, fg: colors.ink, height: 140, label: 'Flyer' } },
+    ],
+  },
+];
+
+export type ProfilePost = {
+  id: string;
+  time: string;
+  kind: PostKind | 'Event';
+  module?: string;
+  text: string;
+  art?: Art;
+};
+
+// The profile owner's own posts, newest first. This is their personal timeline.
+export const profilePosts: ProfilePost[] = [
+  {
+    id: 'p1',
+    time: '2d',
+    kind: 'Event',
+    text: 'Creative Kickback on the 25th. Nexus turns one. Bring a friend you want to make something with.',
+    art: { bg: colors.forest, fg: colors.lime, height: 150, label: 'Flyer' },
+  },
+  {
+    id: 'p2',
+    time: '1w',
+    kind: 'Looking for',
+    text: 'Looking for a drummer and a bassist for a few live Destined Echo dates. San Diego based, rehearsals in North Park.',
+  },
+  {
+    id: 'p3',
+    time: '2w',
+    kind: 'New work',
+    module: 'Film',
+    text: 'Pa Ya screened at the Nexus Film Festival. Thank you to everyone who came out and stayed for the talkback.',
+    art: { bg: colors.lime, fg: colors.ink, height: 170, label: 'Film still' },
+  },
+  {
+    id: 'p4',
+    time: '1mo',
+    kind: 'New work',
+    module: 'Live shows',
+    text: 'Layers Reimagined, live at Quartyard. Same songs, new arrangements, full band.',
+    art: { bg: colors.sand, fg: colors.forest, height: 130, label: 'Show photo' },
+  },
+];
+
+export const profileKindColors: Record<ProfilePost['kind'], { bg: string; fg: string }> = {
+  ...postKindColors,
+  Event: { bg: colors.forest, fg: colors.lime },
 };
 
 type PrivacyRow = { id?: OptionId; title: string; detail: string };

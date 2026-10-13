@@ -12,7 +12,14 @@ export type IconName =
   | 'clock'
   | 'gear'
   | 'back'
-  | 'star';
+  | 'star'
+  | 'chevron'
+  | 'up'
+  | 'down'
+  | 'eye'
+  | 'eyeOff'
+  | 'pin'
+  | 'grid';
 
 type Props = { name: IconName; size?: number; color?: string; strokeWidth?: number };
 
@@ -79,6 +86,25 @@ function paths(name: IconName, p: object) {
       );
     case 'back':
       return <Path {...p} d="M15 18l-6-6 6-6" />;
+    case 'chevron':
+      return <Path {...p} d="M6 9l6 6 6-6" />;
+    case 'up':
+      return <Path {...p} d="M12 19V5M6 11l6-6 6 6" />;
+    case 'down':
+      return <Path {...p} d="M12 5v14M6 13l6 6 6-6" />;
+    case 'eye':
+      return (
+        <>
+          <Path {...p} d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+          <Circle {...p} cx="12" cy="12" r="3" />
+        </>
+      );
+    case 'eyeOff':
+      return <Path {...p} d="M3 3l18 18M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2" />;
+    case 'pin':
+      return <Path {...p} d="M9 3h6l-1 6 4 3v2H6v-2l4-3-1-6zM12 14v7" />;
+    case 'grid':
+      return <Path {...p} d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" />;
     case 'star':
       return <Path {...p} d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z" />;
   }

@@ -14,7 +14,7 @@ Built with React Native and [Expo](https://expo.dev), so the same code runs on i
 | Timeline | Newest first from people you follow, and it ends ("You're all caught up") |
 | Discover | Search and filter creators who opted in to being found |
 | Events | Nexus events and who you follow is going |
-| Profile | Work and where you've shown up, with no follower counts or likes |
+| Profile | Work organized into modules you can reorder, hide and collapse, plus a personal timeline with pinning. No follower counts or likes |
 | Your rules | Privacy, timeline and wellbeing settings, plus always-on AI protection |
 
 ## Run it yourself

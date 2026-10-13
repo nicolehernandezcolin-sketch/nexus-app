@@ -2,13 +2,14 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
-import { ArtBlock, Avatar, Button, Card, Pill, Rise, SectionTitle, text } from '../components/ui';
+import { PersonalTimeline, ProfileTabs, WorkModules } from '../components/ProfileSections';
+import { Avatar, Button, Card, Pill, SectionTitle, text } from '../components/ui';
 import { profile } from '../data/content';
 import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Profile() {
-  const { showToast } = useDemo();
+  const { showToast, profileTab } = useDemo();
   return (
     <Screen nav>
       <View style={styles.hero}>
@@ -59,34 +60,28 @@ export default function Profile() {
           </View>
         </View>
 
-        <View style={{ gap: 10 }}>
-          <SectionTitle>Boards</SectionTitle>
-          <View style={styles.boards}>
-            {profile.boards.map((b, i) => (
-              <Rise key={b.title} delay={250 + i * 80} style={styles.board}>
-                <ArtBlock art={b.art} />
-                <Text style={[text.strong, { fontSize: 13.5 }]}>{b.title}</Text>
-                <Text style={[text.small, { fontSize: 12 }]}>{b.detail}</Text>
-              </Rise>
-            ))}
-          </View>
+        <View style={{ gap: 14 }}>
+          <ProfileTabs />
+          {profileTab === 'work' ? <WorkModules /> : <PersonalTimeline />}
         </View>
 
-        <View style={{ gap: 10 }}>
-          <SectionTitle>Met in person at</SectionTitle>
-          {profile.metAt.map((x) => (
-            <Card key={x} style={styles.met}>
-              <View style={styles.star}>
-                <Icon name="star" size={18} color={colors.forest} />
-              </View>
-              <Text style={{ fontSize: 13.5, fontFamily: fonts.body600, color: colors.ink }}>
-                {x}
-                <Text style={{ fontFamily: fonts.body400, color: colors.muted }}> · checked in</Text>
-              </Text>
-            </Card>
-          ))}
-          <Text style={text.small}>No follower counts or likes on profiles. Nexus shows what you make and where you show up.</Text>
-        </View>
+        {profileTab === 'work' ? (
+          <View style={{ gap: 10 }}>
+            <SectionTitle>Met in person at</SectionTitle>
+            {profile.metAt.map((x) => (
+              <Card key={x} style={styles.met}>
+                <View style={styles.star}>
+                  <Icon name="star" size={18} color={colors.forest} />
+                </View>
+                <Text style={{ fontSize: 13.5, fontFamily: fonts.body600, color: colors.ink }}>
+                  {x}
+                  <Text style={{ fontFamily: fonts.body400, color: colors.muted }}> · checked in</Text>
+                </Text>
+              </Card>
+            ))}
+            <Text style={text.small}>No follower counts or likes on profiles. Nexus shows what you make and where you show up.</Text>
+          </View>
+        ) : null}
       </View>
     </Screen>
   );
@@ -99,8 +94,6 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.display800, fontSize: 22, lineHeight: 25, color: colors.cream },
   tagline: { fontFamily: fonts.body400, fontSize: 13.5, color: colors.creamMuted, marginTop: 3 },
   bio: { fontFamily: fonts.body400, fontSize: 14, lineHeight: 21, color: colors.cream },
-  boards: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  board: { width: '47%', flexGrow: 1, gap: 6 },
   met: { borderRadius: 16, padding: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   star: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.limeSoft, alignItems: 'center', justifyContent: 'center' },
 });
