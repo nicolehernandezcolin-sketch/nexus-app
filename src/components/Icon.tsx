@@ -19,7 +19,15 @@ export type IconName =
   | 'eye'
   | 'eyeOff'
   | 'pin'
-  | 'grid';
+  | 'grid'
+  | 'ticket'
+  | 'lock'
+  | 'fingerprint'
+  | 'refresh'
+  | 'send'
+  | 'tag'
+  | 'link'
+  | 'users';
 
 type Props = { name: IconName; size?: number; color?: string; strokeWidth?: number };
 
@@ -105,6 +113,37 @@ function paths(name: IconName, p: object) {
       return <Path {...p} d="M9 3h6l-1 6 4 3v2H6v-2l4-3-1-6zM12 14v7" />;
     case 'grid':
       return <Path {...p} d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" />;
+    case 'ticket':
+      return <Path {...p} d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4V8zM14 6v12" />;
+    case 'lock':
+      return (
+        <>
+          <Rect {...p} x="4" y="11" width="16" height="10" rx="2" />
+          <Path {...p} d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </>
+      );
+    case 'fingerprint':
+      return <Path {...p} d="M12 11v3a8 8 0 0 1-1.5 4.7M8 9.5A4 4 0 0 1 16 10v2.5M5.2 15a11 11 0 0 0 .8-4 6 6 0 0 1 9-5.2M19 11a7 7 0 0 1-.8 6M15.5 15.5a10 10 0 0 1-1.6 4" />;
+    case 'refresh':
+      return <Path {...p} d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4" />;
+    case 'send':
+      return <Path {...p} d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />;
+    case 'tag':
+      return (
+        <>
+          <Path {...p} d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" />
+          <Circle {...p} cx="7.5" cy="7.5" r="1.5" />
+        </>
+      );
+    case 'link':
+      return <Path {...p} d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />;
+    case 'users':
+      return (
+        <>
+          <Circle {...p} cx="9" cy="8" r="4" />
+          <Path {...p} d="M2 21c1-4 4-6 7-6s6 2 7 6M16 4a4 4 0 0 1 0 8M18 15c2 1 3.5 3 4 6" />
+        </>
+      );
     case 'star':
       return <Path {...p} d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z" />;
   }

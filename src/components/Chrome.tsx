@@ -1,5 +1,5 @@
 // App chrome: bottom navigation, screen wrapper, page header and toast.
-import { router, usePathname } from 'expo-router';
+import { Href, router, usePathname } from 'expo-router';
 import { ReactNode, useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, ScrollView, ScrollViewProps, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -82,6 +82,20 @@ export function PageHeader({ title, sub, right }: { title: string; sub?: string;
   );
 }
 
+/** Top bar for pushed screens: a back button that falls back to `fallback` when there is no history (e.g. a shared link). */
+export function BackHeader({ label, fallback, right }: { label: string; fallback: Href; right?: ReactNode }) {
+  const back = () => (router.canGoBack() ? router.back() : router.replace(fallback));
+  return (
+    <View style={styles.backRow}>
+      <Pressable accessibilityRole="button" onPress={back} style={styles.back}>
+        <Icon name="back" size={18} color={colors.forest} strokeWidth={2.2} />
+        <Text style={styles.backText}>{label}</Text>
+      </Pressable>
+      {right}
+    </View>
+  );
+}
+
 /** Renders the current toast. `**word**` in the message is shown in lime. */
 export function Toast() {
   const { toast } = useDemo();
@@ -126,6 +140,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   navBtn: { minWidth: 64, minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: 16 },
+  backRow: { paddingTop: 10, paddingHorizontal: 16, paddingBottom: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  back: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 4 },
+  backText: { fontFamily: fonts.body600, fontSize: 14, color: colors.forest },
   navLabel: { fontFamily: fonts.body600, fontSize: 11 },
   toast: {
     position: 'absolute',

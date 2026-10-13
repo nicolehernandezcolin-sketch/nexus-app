@@ -1,6 +1,20 @@
 // Small building blocks shared by every screen.
 import { ReactNode, useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, PressableProps, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from 'react-native';
+import {
+  Animated,
+  Image,
+  ImageSourcePropType,
+  ImageStyle,
+  Platform,
+  Pressable,
+  PressableProps,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextStyle,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { Art } from '../data/content';
 import { colors, fonts } from '../theme';
 
@@ -103,7 +117,30 @@ export function Pill({ label, bg, fg, style }: { label: string; bg: string; fg: 
   );
 }
 
-export function Avatar({ initials, bg, size = 42, fg = colors.cream, ring }: { initials: string; bg: string; size?: number; fg?: string; ring?: string }) {
+export function Avatar({
+  initials,
+  bg,
+  size = 42,
+  fg = colors.cream,
+  ring,
+  photo,
+}: {
+  initials: string;
+  bg: string;
+  size?: number;
+  fg?: string;
+  ring?: string;
+  photo?: ImageSourcePropType;
+}) {
+  if (photo) {
+    return (
+      <Image
+        source={photo}
+        accessibilityIgnoresInvertColors
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, borderWidth: ring ? 2 : 0, borderColor: ring }}
+      />
+    );
+  }
   return (
     <View
       style={{
@@ -122,10 +159,21 @@ export function Avatar({ initials, bg, size = 42, fg = colors.cream, ring }: { i
   );
 }
 
-/** Colored block standing in for a photo or artwork. */
-export function ArtBlock({ art, radius = 16, style }: { art: Art; radius?: number; style?: StyleProp<ViewStyle> }) {
+/** A cover image, or a colored block standing in for one. */
+export function ArtBlock({ art, radius = 16, height, style }: { art: Art; radius?: number; height?: number; style?: StyleProp<ViewStyle> }) {
+  const h = height ?? art.height;
+  if (art.image) {
+    return (
+      <Image
+        source={art.image}
+        accessibilityLabel={art.label}
+        resizeMode="cover"
+        style={[{ width: '100%', height: h, borderRadius: radius, backgroundColor: art.bg }, style as StyleProp<ImageStyle>]}
+      />
+    );
+  }
   return (
-    <View style={[styles.art, { height: art.height, backgroundColor: art.bg, borderRadius: radius }, style]}>
+    <View style={[styles.art, { height: h, backgroundColor: art.bg, borderRadius: radius }, style]}>
       <Text style={[styles.artText, { color: art.fg }]}>{art.label} (sample)</Text>
     </View>
   );

@@ -1,5 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { OptionId, workModules } from '../data/content';
+import { OptionId, profile, TicketTier, workModules } from '../data/content';
+
+export type Ticket = { id: string; eventId: string; tier: string; price: number; holder: string; seq: number };
 
 export type ProfileTab = 'work' | 'timeline';
 
@@ -7,7 +9,8 @@ type DemoState = {
   roles: Record<string, boolean>;
   options: Partial<Record<OptionId, boolean>>;
   saved: Record<string, boolean>;
-  going: Record<string, boolean>;
+  tickets: Ticket[];
+  drawings: Record<string, boolean>;
   toast: string | null;
   profileTab: ProfileTab;
   moduleOrder: string[];
@@ -22,7 +25,8 @@ type DemoState = {
   toggleRole: (role: string) => void;
   toggleOption: (id: OptionId) => void;
   toggleSaved: (postId: string) => void;
-  toggleGoing: (eventId: string) => void;
+  buyTickets: (eventId: string, tier: TicketTier, quantity: number) => void;
+  enterDrawing: (eventId: string) => void;
   showToast: (message: string) => void;
 };
 
@@ -38,7 +42,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<Record<string, boolean>>({ Musician: true, Producer: true });
   const [options, setOptions] = useState<Partial<Record<OptionId, boolean>>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
-  const [going, setGoing] = useState<Record<string, boolean>>({});
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [drawings, setDrawings] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState<string | null>(null);
   const [profileTab, setProfileTab] = useState<ProfileTab>('work');
   const [moduleOrder, setModuleOrder] = useState(() => workModules.map((m) => m.id));
@@ -58,7 +63,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       roles,
       options,
       saved,
-      going,
+      tickets,
+      drawings,
       toast,
       profileTab,
       moduleOrder,
@@ -81,10 +87,23 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       toggleRole: (r) => setRoles((s) => flip(s, r)),
       toggleOption: (id) => setOptions((s) => flip(s, id)),
       toggleSaved: (id) => setSaved((s) => flip(s, id)),
-      toggleGoing: (id) => setGoing((s) => flip(s, id)),
+      buyTickets: (eventId, tier, quantity) =>
+        setTickets((list) => [
+          ...list,
+          // One ticket per person: every ticket carries a name, starting with the buyer.
+          ...Array.from({ length: quantity }, (_, i) => ({
+            id: `${eventId}-${list.length + i + 1}`,
+            eventId,
+            tier: tier.name,
+            price: tier.price,
+            holder: i === 0 ? profile.name : `Guest ${i} · name it before the show`,
+            seq: list.length + i + 1,
+          })),
+        ]),
+      enterDrawing: (id) => setDrawings((s) => ({ ...s, [id]: true })),
       showToast,
     }),
-    [roles, options, saved, going, toast, profileTab, moduleOrder, hiddenModules, collapsedModules, pinnedPost, showToast],
+    [roles, options, saved, tickets, drawings, toast, profileTab, moduleOrder, hiddenModules, collapsedModules, pinnedPost, showToast],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

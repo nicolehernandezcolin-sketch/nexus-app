@@ -1,13 +1,20 @@
 // Profile sections: the Work / Timeline switcher, organizable work modules, and the personal timeline.
+import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, LayoutChangeEvent, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { profile, profileKindColors, ProfilePost, profilePosts, WorkModule, workModules } from '../data/content';
+import { events, profile, profileKindColors, ProfilePost, profilePosts, WorkModule, workModules } from '../data/content';
+import { saleLabel } from '../data/fees';
 import { ProfileTab, useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 import { Icon, IconName } from './Icon';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, Tap, text } from './ui';
 
 const nativeDriver = Platform.OS !== 'web';
+
+const eventCta = (id: string) => {
+  const e = events.find((x) => x.id === id);
+  return e ? saleLabel(e.sale) : 'See event';
+};
 
 /** Two-way switch with a lime pill that slides to the selected side. */
 export function ProfileTabs() {
@@ -101,7 +108,7 @@ export function WorkModules() {
 }
 
 function ModuleCard({ module: m, organizing, index, count }: { module: WorkModule; organizing: boolean; index: number; count: number }) {
-  const { collapsedModules, hiddenModules, toggleModuleCollapsed, toggleModuleHidden, moveModule, showToast } = useDemo();
+  const { collapsedModules, hiddenModules, toggleModuleCollapsed, toggleModuleHidden, moveModule } = useDemo();
   const collapsed = !!collapsedModules[m.id];
   const hidden = !!hiddenModules[m.id];
   const spin = useRef(new Animated.Value(collapsed ? 1 : 0)).current;
@@ -151,9 +158,9 @@ function ModuleCard({ module: m, organizing, index, count }: { module: WorkModul
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moduleItems}>
           {m.items.map((item) => (
             <Tap
-              key={item.title + item.detail}
+              key={item.id}
               accessibilityRole="button"
-              onPress={() => showToast(`Opening **${item.title}**. Full pieces open in the full app.`)}
+              onPress={() => router.push({ pathname: '/work/[id]', params: { id: item.id } })}
               style={styles.workItem}
             >
               <ArtBlock art={item.art} radius={14} />
@@ -214,12 +221,12 @@ export function PersonalTimeline() {
 }
 
 function OwnPost({ post: p, pinned }: { post: ProfilePost; pinned: boolean }) {
-  const { togglePinned, setProfileTab, showToast } = useDemo();
+  const { togglePinned, showToast } = useDemo();
   const kind = profileKindColors[p.kind];
   return (
     <Card style={[styles.post, pinned && { borderWidth: 1.5, borderColor: colors.olive }]}>
       <View style={styles.author}>
-        <Avatar initials={profile.initials} bg={colors.lime} fg={colors.ink} size={36} />
+        <Avatar initials={profile.initials} photo={profile.photo} bg={colors.lime} fg={colors.ink} size={36} />
         <View style={{ flex: 1 }}>
           <Text style={[text.strong, { fontSize: 14 }]}>{profile.name}</Text>
           <Text style={text.small}>{pinned ? `Pinned · ${p.time}` : p.time}</Text>
@@ -240,13 +247,22 @@ function OwnPost({ post: p, pinned }: { post: ProfilePost; pinned: boolean }) {
             togglePinned(p.id);
           }}
         />
-        {p.module ? (
+        {p.workId ? (
           <Button
             variant="ghost"
-            label={`In ${p.module}`}
+            label={p.module ? `In ${p.module}` : 'See the work'}
             icon={<Icon name="grid" size={16} color={colors.forest} />}
             style={{ height: 38 }}
-            onPress={() => setProfileTab('work')}
+            onPress={() => router.push({ pathname: '/work/[id]', params: { id: p.workId! } })}
+          />
+        ) : null}
+        {p.eventId ? (
+          <Button
+            variant="ghost"
+            label={eventCta(p.eventId)}
+            icon={<Icon name="ticket" size={16} color={colors.forest} />}
+            style={{ height: 38 }}
+            onPress={() => router.push({ pathname: '/event/[id]', params: { id: p.eventId! } })}
           />
         ) : null}
       </View>

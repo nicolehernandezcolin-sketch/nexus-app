@@ -13,8 +13,11 @@ Built with React Native and [Expo](https://expo.dev), so the same code runs on i
 | Welcome | Pick what you make; every visibility switch starts off |
 | Timeline | Newest first from people you follow, and it ends ("You're all caught up") |
 | Discover | Search and filter creators who opted in to being found |
-| Events | Nexus events and who you follow is going |
-| Profile | Work organized into modules you can reorder, hide and collapse, plus a personal timeline with pinning. No follower counts or likes |
+| Events | Nexus events, ticket sales with a lower fee than Eventbrite, free RSVPs and fair drawings |
+| Event page and checkout | Ticket tiers, a 4-per-person limit, a fee breakdown and a fair-access check before paying |
+| My tickets | Named tickets with a live code that changes every 15 seconds, free transfers and face-value resale |
+| Profile | Real bio and photo, upcoming events with tickets, and work organized into modules you can reorder, hide and collapse, plus a personal timeline with pinning. No follower counts or likes |
+| Work pages | Every piece on the profile opens with details, credits, linked events and related posts |
 | Your rules | Privacy, timeline and wellbeing settings, plus always-on AI protection |
 
 ## Run it yourself
@@ -27,6 +30,10 @@ npm start
 ```
 
 Then press `w` to open it in a browser, or scan the QR code with the **Expo Go** app on your phone.
+
+## Ticketing
+
+The fee, the per-person limit and the code refresh time live in [`src/data/fees.ts`](src/data/fees.ts). How real payments and anti-scalping protections would work is written up in [`docs/TICKETING.md`](docs/TICKETING.md). Ticket prices in the demo are samples and nothing is charged.
 
 ## Editing content
 

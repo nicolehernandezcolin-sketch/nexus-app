@@ -1,15 +1,34 @@
+import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { PageHeader, Screen } from '../components/Chrome';
+import { Icon } from '../components/Icon';
 import { Avatar, Pill, Rise, Tap } from '../components/ui';
 import { events, NexusEvent } from '../data/content';
+import { saleLabel } from '../data/fees';
 import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Events() {
+  const { tickets } = useDemo();
   return (
     <Screen
       nav
-      header={<PageHeader title="Off the app, into the room" sub="See who you follow is going, then go say hi in person." />}
+      header={
+        <PageHeader
+          title="Off the app, into the room"
+          sub="See who you follow is going, then go say hi in person."
+          right={
+            <Tap accessibilityRole="button" accessibilityLabel="My tickets" onPress={() => router.push('/tickets')} style={styles.wallet}>
+              <Icon name="ticket" size={20} color={colors.lime} />
+              {tickets.length ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{tickets.length}</Text>
+                </View>
+              ) : null}
+            </Tap>
+          }
+        />
+      }
       contentStyle={styles.list}
     >
       {events.map((e, i) => (
@@ -24,19 +43,17 @@ export default function Events() {
 const friendColors = [colors.olive, colors.forest, colors.lime];
 
 function EventCard({ event: e }: { event: NexusEvent }) {
-  const { going, toggleGoing, showToast } = useDemo();
+  const { tickets, drawings } = useDemo();
   const dark = !!e.featured;
-  const on = !!going[e.id];
   const fg = dark ? colors.cream : colors.ink;
   const subtle = dark ? colors.creamMuted : colors.muted;
 
-  const onPress = () => {
-    if (!on) showToast('You’re going. See you **in person**.');
-    toggleGoing(e.id);
-  };
+  const mine = tickets.filter((t) => t.eventId === e.id).length;
+  const status = mine ? (e.sale.kind === 'free' ? 'Going' : `${mine} ticket${mine > 1 ? 's' : ''}`) : drawings[e.id] ? 'Entered' : null;
+  const open = () => router.push({ pathname: '/event/[id]', params: { id: e.id } });
 
   return (
-    <View style={[styles.card, { backgroundColor: dark ? colors.forest : colors.paper }]}>
+    <Tap accessibilityRole="button" accessibilityLabel={`${e.title}, ${e.when}`} onPress={open} style={[styles.card, { backgroundColor: dark ? colors.forest : colors.paper }]}>
       <View style={styles.top}>
         <View style={[styles.date, { backgroundColor: dark ? colors.lime : colors.stone }]}>
           <Text style={[styles.month, { fontSize: e.month.length > 3 ? 9 : 11, color: dark ? colors.ink : colors.forest }]}>{e.month}</Text>
@@ -68,26 +85,38 @@ function EventCard({ event: e }: { event: NexusEvent }) {
           ))}
         </View>
         <Text style={[styles.meta, { flex: 1, color: subtle }]}>{e.friendsText}</Text>
-        <Tap
-          accessibilityRole="button"
-          accessibilityState={{ selected: on }}
-          onPress={onPress}
+        <View
           style={[
-            styles.going,
-            { borderColor: on || dark ? colors.lime : colors.forest, backgroundColor: on ? colors.lime : 'transparent' },
+            styles.cta,
+            { borderColor: status || dark ? colors.lime : colors.forest, backgroundColor: status ? colors.lime : 'transparent' },
           ]}
         >
-          <Text style={[styles.goingText, { color: on ? colors.ink : dark ? colors.lime : colors.forest }]}>
-            {on ? 'Going' : 'I’m going'}
-          </Text>
-        </Tap>
+          {status ? <Icon name="check" size={14} strokeWidth={2.6} /> : null}
+          <Text style={[styles.ctaText, { color: status ? colors.ink : dark ? colors.lime : colors.forest }]}>{status ?? saleLabel(e.sale)}</Text>
+        </View>
       </View>
-    </View>
+    </Tap>
   );
 }
 
 const styles = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 20, gap: 14 },
+  wallet: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center' },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    backgroundColor: colors.lime,
+    borderWidth: 2,
+    borderColor: colors.cream,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: { fontFamily: fonts.display800, fontSize: 10, color: colors.ink },
   card: { borderRadius: 22, padding: 16, gap: 14 },
   top: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
   date: { width: 62, height: 64, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 4 },
@@ -96,6 +125,6 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.display700, fontSize: 18, lineHeight: 21 },
   meta: { fontFamily: fonts.body400, fontSize: 12.5, lineHeight: 18 },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  going: { height: 40, borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 16, justifyContent: 'center' },
-  goingText: { fontFamily: fonts.body600, fontSize: 13.5 },
+  cta: { height: 36, borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  ctaText: { fontFamily: fonts.body600, fontSize: 12.5 },
 });
