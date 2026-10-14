@@ -12,7 +12,7 @@ Built with React Native and [Expo](https://expo.dev), so the same code runs on i
 | --- | --- |
 | Welcome | Pick what you make; every visibility switch starts off |
 | Timeline | Newest first from people you follow, and it ends ("You're all caught up"). Post new work, a "Looking for" or a crew call, with a photo |
-| Discover | Search and filter creators who opted in to being found, or use Talent match to rank them by what your project needs |
+| Discover | Search and filter creators who opted in to being found, use Talent match to rank them by what your project needs, or show only Mutuals: people you share a past event or connection with |
 | Events | Nexus events, ticket sales with a lower fee than Eventbrite, free RSVPs and fair drawings |
 | Event page and checkout | Ticket tiers, a 4-per-person limit, a fee breakdown and a fair-access check before paying |
 | My tickets | Named tickets with a live code that changes every 15 seconds, free transfers and face-value resale |

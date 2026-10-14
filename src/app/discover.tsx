@@ -43,22 +43,51 @@ function score(c: Creator, m: Match): Scored | null {
     points += 10;
     reasons.push(c.city);
   }
-  if (c.sharedEvents) {
-    points += Math.min(c.sharedEvents * 5, 15);
-    reasons.push(`${c.sharedEvents} Nexus event${c.sharedEvents > 1 ? 's' : ''} in common`);
+  const shared = c.sharedAt.length;
+  if (shared) {
+    points += Math.min(shared * 5, 15);
+    reasons.push(`${shared} Nexus event${shared > 1 ? 's' : ''} in common`);
   }
   return { creator: c, percent: Math.round((points / possible) * 100), reasons };
+}
+
+const hasCommonLink = (c: Creator) => c.sharedAt.length > 0 || c.mutuals.length > 0;
+
+/** The greyed-out line on a card saying what you have in common. */
+function CommonLink({ creator: c }: { creator: Creator }) {
+  if (!hasCommonLink(c)) return null;
+  const lines: string[] = [];
+  if (c.sharedAt.length) lines.push(`Both at ${c.sharedAt[0]}${c.sharedAt.length > 1 ? ` +${c.sharedAt.length - 1}` : ''}`);
+  if (c.mutuals.length) lines.push(`Knows ${c.mutuals[0]}${c.mutuals.length > 1 ? ` +${c.mutuals.length - 1}` : ''}`);
+  return (
+    <View style={styles.common}>
+      {lines.map((l, i) => (
+        <View key={l} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 5 }}>
+          <View style={{ marginTop: 3 }}>
+            <Icon name={i === 0 && c.sharedAt.length ? 'events' : 'users'} size={11} color={colors.navOff} strokeWidth={2.2} />
+          </View>
+          <Text style={styles.commonText}>
+            {l}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
 }
 
 export default function Discover() {
   const [filter, setFilter] = useState<Discipline>('All');
   const [query, setQuery] = useState('');
   const [matching, setMatching] = useState(false);
+  const [mutualsOnly, setMutualsOnly] = useState(false);
   const [match, setMatch] = useState<Match>({ needs: [], project: null, nearby: false });
 
   const q = query.trim().toLowerCase();
   const base = creators.filter(
-    (c) => (filter === 'All' || c.discipline === filter) && (!q || `${c.name} ${c.role} ${c.openTo}`.toLowerCase().includes(q)),
+    (c) =>
+      (filter === 'All' || c.discipline === filter) &&
+      (!mutualsOnly || hasCommonLink(c)) &&
+      (!q || `${c.name} ${c.role} ${c.openTo}`.toLowerCase().includes(q)),
   );
   const scored: Scored[] = matching
     ? base
@@ -109,6 +138,15 @@ export default function Discover() {
                 <Icon name="sparkle" size={16} color={matching ? colors.ink : colors.forest} />
                 <Text style={[styles.matchToggleText, matching && { color: colors.ink }]}>Talent match</Text>
               </Tap>
+              <Tap
+                accessibilityRole="switch"
+                accessibilityState={{ checked: mutualsOnly }}
+                onPress={() => setMutualsOnly(!mutualsOnly)}
+                style={[styles.matchToggle, mutualsOnly && { backgroundColor: colors.ink, borderColor: colors.ink }]}
+              >
+                <Icon name="users" size={16} color={mutualsOnly ? colors.lime : colors.forest} />
+                <Text style={[styles.matchToggleText, mutualsOnly && { color: colors.lime }]}>Mutuals</Text>
+              </Tap>
               {disciplines.map((d) => (
                 <Chip key={d} dark label={d} selected={filter === d} onPress={() => setFilter(d)} />
               ))}
@@ -123,13 +161,17 @@ export default function Discover() {
       {!matching ? (
         <View style={styles.note}>
           <View style={styles.dot} />
-          <Text style={[text.small, { color: colors.muted2, flex: 1 }]}>Only creators who opted in to being found show up here.</Text>
+          <Text style={[text.small, { color: colors.muted2, flex: 1 }]}>
+            {mutualsOnly
+              ? 'People you share a past Nexus event or a connection with.'
+              : 'Only creators who opted in to being found show up here.'}
+          </Text>
         </View>
       ) : null}
 
       {scored.length === 0 ? (
         <Text style={[text.sub, { textAlign: 'center', marginVertical: 24 }]}>
-          {matching ? 'No one matches all of that yet. Try fewer filters.' : 'No one matches yet. Try another word or filter.'}
+          {matching || mutualsOnly ? 'No one matches all of that yet. Try fewer filters.' : 'No one matches yet. Try another word or filter.'}
         </Text>
       ) : (
         <View style={styles.grid}>
@@ -251,6 +293,7 @@ function CreatorTile({ scored: { creator: c, percent, reasons }, showMatch }: { 
         ) : (
           <Pill label={c.openTo} bg={colors.limeSoft} fg={colors.forest} style={{ marginTop: 5, paddingHorizontal: 8, paddingVertical: 4 }} />
         )}
+        <CommonLink creator={c} />
       </View>
     </Tap>
   );
@@ -292,6 +335,8 @@ const styles = StyleSheet.create({
   mChipText: { fontFamily: fonts.body500, fontSize: 13, color: colors.cream },
   nearRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
   nearTitle: { fontFamily: fonts.body600, fontSize: 14, color: colors.cream },
+  common: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.stone, gap: 3 },
+  commonText: { flex: 1, fontFamily: fonts.body500, fontSize: 11.5, color: colors.muted, lineHeight: 16 },
   grid: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   col: { flex: 1, gap: 10 },
   tile: { backgroundColor: colors.paper, borderRadius: 18, overflow: 'hidden' },

@@ -131,20 +131,22 @@ export type Creator = {
   skills: Skill[];
   projects: ProjectType[];
   city: string;
-  /** Nexus events you were both checked in at. */
-  sharedEvents: number;
+  /** Past Nexus events you were both checked in at. */
+  sharedAt: string[];
+  /** People you both know on Nexus. */
+  mutuals: string[];
 };
 
 export const creators: Creator[] = [
-  { name: 'Sofia Ramos', role: 'Vocalist · Chula Vista', discipline: 'Music', openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'Live set' }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'Chula Vista', sharedEvents: 2 },
-  { name: 'Kai Nakamura', role: 'Cinematographer', discipline: 'Film', openTo: 'Open to music videos', art: { bg: colors.sand, fg: colors.forest, height: 130, label: 'Reel still' }, skills: ['Film crew'], projects: ['Music video', 'Short film'], city: 'San Diego', sharedEvents: 3 },
-  { name: 'Dani Flores', role: 'Muralist', discipline: 'Visual', openTo: 'Open to commissions', art: { bg: colors.lime, fg: colors.ink, height: 220, label: 'Mural' }, skills: ['Visual art'], projects: ['Album art', 'Stage show'], city: 'San Diego', sharedEvents: 0 },
-  { name: 'Jordan Ellis', role: 'Drummer', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.ink, fg: colors.lime, height: 150, label: 'Studio photo' }, skills: ['Drums'], projects: ['Live show'], city: 'San Diego', sharedEvents: 2 },
-  { name: 'Ana Lucero', role: 'Choreographer · Tijuana', discipline: 'Movement', openTo: 'Open to stage work', art: { bg: colors.olive, fg: colors.cream, height: 170, label: 'Rehearsal' }, skills: ['Choreography'], projects: ['Stage show', 'Music video'], city: 'Tijuana', sharedEvents: 1 },
-  { name: 'Ruben Ortiz', role: 'Editor and colorist', discipline: 'Film', openTo: 'Open to short films', art: { bg: colors.stone, fg: colors.forest, height: 140, label: 'Color grade' }, skills: ['Editing'], projects: ['Short film', 'Music video'], city: 'San Diego', sharedEvents: 1 },
-  { name: 'Mia Chen', role: 'Illustrator · Los Angeles', discipline: 'Visual', openTo: 'Open to album art', art: { bg: colors.forest, fg: colors.cream, height: 180, label: 'Illustration' }, skills: ['Visual art'], projects: ['Album art'], city: 'Los Angeles', sharedEvents: 0 },
-  { name: 'Luis Herrera', role: 'Sound engineer', discipline: 'Music', openTo: 'Open to live shows', art: { bg: colors.sand, fg: colors.ink, height: 130, label: 'Board photo' }, skills: ['Sound'], projects: ['Live show'], city: 'San Diego', sharedEvents: 1 },
-  { name: 'Andre Okafor', role: 'Bassist · North Park', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.olive, fg: colors.lime, height: 150, label: 'Jam session' }, skills: ['Bass'], projects: ['Live show', 'Music video'], city: 'San Diego', sharedEvents: 3 },
+  { name: 'Sofia Ramos', role: 'Vocalist · Chula Vista', discipline: 'Music', openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'Live set' }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'Chula Vista', sharedAt: ['Nexus Film Festival', 'UC Series at UCSD'], mutuals: ['Marisol Vega'] },
+  { name: 'Kai Nakamura', role: 'Cinematographer', discipline: 'Film', openTo: 'Open to music videos', art: { bg: colors.sand, fg: colors.forest, height: 130, label: 'Reel still' }, skills: ['Film crew'], projects: ['Music video', 'Short film'], city: 'San Diego', sharedAt: ['Nexus Film Festival', 'Latin Jazz Night', 'Nex Up'], mutuals: ['Lena Park', 'Ruben Ortiz'] },
+  { name: 'Dani Flores', role: 'Muralist', discipline: 'Visual', openTo: 'Open to commissions', art: { bg: colors.lime, fg: colors.ink, height: 220, label: 'Mural' }, skills: ['Visual art'], projects: ['Album art', 'Stage show'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { name: 'Jordan Ellis', role: 'Drummer', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.ink, fg: colors.lime, height: 150, label: 'Studio photo' }, skills: ['Drums'], projects: ['Live show'], city: 'San Diego', sharedAt: ['Nex Up', 'Latin Jazz Night'], mutuals: ['Andre Okafor'] },
+  { name: 'Ana Lucero', role: 'Choreographer · Tijuana', discipline: 'Movement', openTo: 'Open to stage work', art: { bg: colors.olive, fg: colors.cream, height: 170, label: 'Rehearsal' }, skills: ['Choreography'], projects: ['Stage show', 'Music video'], city: 'Tijuana', sharedAt: ['Nexus Film Festival'], mutuals: [] },
+  { name: 'Ruben Ortiz', role: 'Editor and colorist', discipline: 'Film', openTo: 'Open to short films', art: { bg: colors.stone, fg: colors.forest, height: 140, label: 'Color grade' }, skills: ['Editing'], projects: ['Short film', 'Music video'], city: 'San Diego', sharedAt: ['Nexus Film Festival'], mutuals: ['Kai Nakamura'] },
+  { name: 'Mia Chen', role: 'Illustrator · Los Angeles', discipline: 'Visual', openTo: 'Open to album art', art: { bg: colors.forest, fg: colors.cream, height: 180, label: 'Illustration' }, skills: ['Visual art'], projects: ['Album art'], city: 'Los Angeles', sharedAt: [], mutuals: [] },
+  { name: 'Luis Herrera', role: 'Sound engineer', discipline: 'Music', openTo: 'Open to live shows', art: { bg: colors.sand, fg: colors.ink, height: 130, label: 'Board photo' }, skills: ['Sound'], projects: ['Live show'], city: 'San Diego', sharedAt: ['Latin Jazz Night'], mutuals: [] },
+  { name: 'Andre Okafor', role: 'Bassist · North Park', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.olive, fg: colors.lime, height: 150, label: 'Jam session' }, skills: ['Bass'], projects: ['Live show', 'Music video'], city: 'San Diego', sharedAt: ['Latin Jazz Night', 'Nex Up', 'UC Series at UCSD'], mutuals: ['Jordan Ellis'] },
 ];
 
 /* ---------- Events and tickets ---------- */
@@ -295,7 +297,7 @@ export const profile = {
   tagline: 'Artist · Creative entrepreneur · Golfer',
   role: 'Founder and Creative Director, Nexus',
   location: 'San Diego',
-  bio: 'Multidisciplinary artist pushing culture through intersectionality. I started Nexus because I see everything connecting. My debut album Layers and its short film Layered Visions are a fusion of Afro-Cuban R&B. I perform as Destined Echo.',
+  bio: 'Multidisciplinary artist pushing culture through intersectionality. I started Nexus because I see everything connecting. My debut album Layers and its short film Layered Visions are a fusion of Afro-Cuban R&B.',
   openTo: ['Band members', 'Music video crews', 'Event partners', 'Sponsors'],
   links: [{ label: 'Linktree', url: 'https://linktr.ee/nicolehernandezcolin' }],
   hosting: ['curtain', 'latin-jazz', 'nff2'],
