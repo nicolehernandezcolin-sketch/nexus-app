@@ -3,13 +3,23 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
-import { Card, Pill, Switch, text } from '../components/ui';
-import { aiProtections, privacySections } from '../data/content';
+import { Button, Card, Pill, Switch, text } from '../components/ui';
+import { aiProtections, OptionId, privacySections } from '../data/content';
+import { optionColumns } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Privacy() {
-  const { options, toggleOption } = useDemo();
+  const { options: demoOptions, toggleOption: toggleDemo, showToast } = useDemo();
+  const { live, me, saveMe, signOut } = useAuth();
+  // With an account, switches read and save your profile; otherwise they're the demo's.
+  const options: Partial<Record<OptionId, boolean>> =
+    live && me ? Object.fromEntries(Object.entries(optionColumns).map(([k, col]) => [k, me[col]])) : demoOptions;
+  const toggleOption = (id: OptionId) => {
+    if (!live) return toggleDemo(id);
+    saveMe({ [optionColumns[id]]: !options[id] }).catch((e) => showToast((e as Error).message));
+  };
   const insets = useSafeAreaInsets();
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
@@ -66,6 +76,16 @@ export default function Privacy() {
           </View>
         ))}
       </View>
+      {live ? (
+        <Button
+          variant="ghost"
+          label="Sign out"
+          onPress={async () => {
+            await signOut();
+            router.replace('/auth');
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }

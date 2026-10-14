@@ -11,7 +11,9 @@ Built with React Native and [Expo](https://expo.dev), so the same code runs on i
 | Screen | What it shows |
 | --- | --- |
 | Welcome | Pick what you make; every visibility switch starts off |
-| Timeline | Newest first from people you follow, and it ends ("You're all caught up"). Post new work, a "Looking for" or a crew call, with a photo |
+| Timeline | Newest first from people you follow, and it ends ("You're all caught up"). Post to everyone or privately to a group, with a photo |
+| Private groups | Invite-only spaces for work in progress. Posts and files are visible to members only and never reach Discover or profiles |
+| Messages | Private one-to-one conversations for sharing full-quality work |
 | Discover | Search and filter creators who opted in to being found, use Talent match to rank them by what your project needs, or show only Mutuals: people you share a past event or connection with |
 | Events | Nexus events, ticket sales with a lower fee than Eventbrite, free RSVPs and fair drawings |
 | Event page and checkout | Ticket tiers, a 4-per-person limit, a fee breakdown and a fair-access check before paying |
@@ -20,6 +22,10 @@ Built with React Native and [Expo](https://expo.dev), so the same code runs on i
 | Team profiles | Everyone who worked on an event, linked from My events, with what they did |
 | Work pages | Every piece on the profile opens with details, credits, linked events and related posts |
 | Your rules | Privacy, timeline and wellbeing settings, plus always-on AI protection |
+
+## Demo and live modes
+
+With no backend settings the app runs as this demo, with sample content. Connect a Supabase project and it becomes the real app: accounts, saved profiles and posts, follows, events, private groups and messages. Setup steps, what works live, and how privacy and encryption are handled are in [`docs/BACKEND.md`](docs/BACKEND.md).
 
 ## Run it yourself
 

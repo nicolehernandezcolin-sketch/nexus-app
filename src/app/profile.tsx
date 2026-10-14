@@ -8,12 +8,16 @@ import { ProfilePosts, ProfileTabs, WorkModules } from '../components/ProfileSec
 import { Avatar, Button, Card, Pill, SectionTitle, Tap, text } from '../components/ui';
 import { events, profile } from '../data/content';
 import { saleLabel } from '../data/fees';
+import { LiveProfile } from '../components/LiveProfile';
+import { useAuth } from '../lib/auth';
 import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Profile() {
   const { showToast, profileTab } = useDemo();
   const [customizing, setCustomizing] = useState(false);
+  const { live, me } = useAuth();
+  if (live) return me ? <LiveProfile /> : null;
   const hosting = profile.hosting.map((id) => events.find((e) => e.id === id)).filter((e) => !!e);
 
   return (
@@ -82,7 +86,7 @@ export default function Profile() {
             variant="outlineDark"
             label="Message"
             style={{ flex: 1, height: 44 }}
-            onPress={() => showToast('Messaging is coming in the full app.')}
+            onPress={() => router.push('/messages')}
           />
         </View>
       </View>

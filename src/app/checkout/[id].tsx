@@ -8,6 +8,7 @@ import { FairAccessCheck, PriceBreakdown } from '../../components/Tickets';
 import { Button, Card, SectionTitle, text } from '../../components/ui';
 import { events, profile } from '../../data/content';
 import { money, quote, TICKET_LIMIT } from '../../data/fees';
+import { useAuth } from '../../lib/auth';
 import { useDemo } from '../../state/DemoState';
 import { colors, fonts } from '../../theme';
 
@@ -18,6 +19,7 @@ export async function generateStaticParams(): Promise<Record<string, string>[]> 
 export default function Checkout() {
   const { id, tier: tierId, qty } = useLocalSearchParams<{ id: string; tier?: string; qty?: string }>();
   const { tickets, buyTickets, showToast } = useDemo();
+  const { live } = useAuth();
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState(false);
   const onChecked = useCallback(() => setReady(true), []);
@@ -84,8 +86,17 @@ export default function Checkout() {
           <Icon name="lock" size={16} color={colors.forest} />
           <Text style={[text.small, { flex: 1 }]}>Apple Pay, Google Pay or card, processed securely by Stripe.</Text>
         </View>
-        <Button variant="big" label={ready ? `Pay ${money(total)}` : 'Checking…'} onPress={ready ? pay : undefined} style={!ready && { opacity: 0.5 }} />
-        <Text style={[text.small, { textAlign: 'center' }]}>Demo only. No card is charged.</Text>
+        {live ? (
+          <>
+            <Button variant="big" label="Payments open soon" style={{ opacity: 0.5 }} />
+            <Text style={[text.small, { textAlign: 'center' }]}>Card payments switch on once Stripe is connected. Nothing is charged yet.</Text>
+          </>
+        ) : (
+          <>
+            <Button variant="big" label={ready ? `Pay ${money(total)}` : 'Checking…'} onPress={ready ? pay : undefined} style={!ready && { opacity: 0.5 }} />
+            <Text style={[text.small, { textAlign: 'center' }]}>Demo only. No card is charged.</Text>
+          </>
+        )}
       </View>
     </Screen>
   );

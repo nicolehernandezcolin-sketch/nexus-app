@@ -1,8 +1,8 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { OptionId, PostKind, profile, TicketTier, workModules } from '../data/content';
+import { DemoMessage, OptionId, PostKind, profile, TicketTier, workModules } from '../data/content';
 
 /** A post written in the demo, shown at the top of the timeline and on the profile. */
-export type UserPost = { id: string; kind: PostKind; text: string; image?: string };
+export type UserPost = { id: string; kind: PostKind; text: string; image?: string; groupId?: string };
 
 export type HeaderStyle = { cover: string; pattern: 'none' | 'waves' | 'grid' | 'dots' };
 
@@ -25,6 +25,8 @@ type DemoState = {
   userPosts: UserPost[];
   header: HeaderStyle;
   addPost: (post: Omit<UserPost, 'id'>) => void;
+  sentMessages: Record<string, DemoMessage[]>;
+  sendDemoMessage: (conversation: string, body: string) => void;
   setHeader: (change: Partial<HeaderStyle>) => void;
   setProfileTab: (tab: ProfileTab) => void;
   moveModule: (id: string, by: -1 | 1) => void;
@@ -60,6 +62,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({});
   const [pinnedPost, setPinnedPost] = useState<string | null>(null);
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
+  const [sentMessages, setSent] = useState<Record<string, DemoMessage[]>>({});
   const [header, setHeaderState] = useState<HeaderStyle>({ cover: 'dome', pattern: 'none' });
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -84,6 +87,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       pinnedPost,
       userPosts,
       header,
+      sentMessages,
+      sendDemoMessage: (c, body) => setSent((m) => ({ ...m, [c]: [...(m[c] ?? []), { from: 'me', body, time: 'Just now' }] })),
       addPost: (post) => setUserPosts((list) => [{ ...post, id: `u${list.length + 1}` }, ...list]),
       setHeader: (change) => setHeaderState((h) => ({ ...h, ...change })),
       setProfileTab,
@@ -118,7 +123,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       enterDrawing: (id) => setDrawings((s) => ({ ...s, [id]: true })),
       showToast,
     }),
-    [roles, options, saved, tickets, drawings, toast, profileTab, moduleOrder, hiddenModules, collapsedModules, pinnedPost, userPosts, header, showToast],
+    [roles, options, saved, tickets, drawings, toast, profileTab, moduleOrder, hiddenModules, collapsedModules, pinnedPost, userPosts, sentMessages, header, showToast],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

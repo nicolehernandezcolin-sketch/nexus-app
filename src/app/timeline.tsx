@@ -1,14 +1,22 @@
-import { router } from 'expo-router';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { PageHeader, Screen } from '../components/Chrome';
+import { LivePostCard } from '../components/Feed';
+import { GroupsTab } from '../components/Groups';
 import { Icon } from '../components/Icon';
+import { MeAvatar } from '../components/Me';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, Tap, text } from '../components/ui';
 import { Post, postKindColors, posts, profile } from '../data/content';
+import { fetchTimeline, useLoad } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { useDemo, UserPost } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Timeline() {
   const { userPosts } = useDemo();
+  const { live } = useAuth();
+  const [tab, setTab] = useState<'following' | 'groups'>('following');
   return (
     <Screen
       nav
@@ -17,12 +25,30 @@ export default function Timeline() {
           <PageHeader
             title="Timeline"
             right={
-              <View style={styles.order}>
-                <Icon name="clock" size={14} color={colors.forest} strokeWidth={2.2} />
-                <Text style={styles.orderText}>Newest first · Following</Text>
-              </View>
+              <Tap accessibilityRole="button" accessibilityLabel="Messages" onPress={() => router.push('/messages')} style={styles.inbox}>
+                <Icon name="chat" size={20} color={colors.lime} />
+              </Tap>
             }
           />
+          <View style={styles.tabs}>
+            {(['following', 'groups'] as const).map((t) => {
+              const on = tab === t;
+              return (
+                <Tap
+                  key={t}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: on }}
+                  onPress={() => setTab(t)}
+                  style={[styles.tab, on && { backgroundColor: colors.forest, borderColor: colors.forest }]}
+                >
+                  <Icon name={t === 'following' ? 'clock' : 'lock'} size={14} color={on ? colors.lime : colors.forest} strokeWidth={2.2} />
+                  <Text style={[styles.tabText, on && { color: colors.lime }]}>
+                    {t === 'following' ? 'Following · newest first' : 'Private groups'}
+                  </Text>
+                </Tap>
+              );
+            })}
+          </View>
         </View>
       }
       contentStyle={styles.list}
@@ -33,24 +59,38 @@ export default function Timeline() {
         </Tap>
       }
     >
-      <Tap accessibilityRole="button" onPress={() => router.push('/compose')} style={styles.composer}>
-        <Avatar initials={profile.initials} photo={profile.photo} bg={colors.lime} fg={colors.ink} size={38} />
-        <Text style={styles.composerText}>Share new work or find collaborators…</Text>
-        <Icon name="image" size={20} color={colors.olive} />
-      </Tap>
-      {userPosts.map((p) => (
-        <Rise key={p.id}>
-          <MyPost post={p} />
-        </Rise>
-      ))}
-      {posts.map((p, i) => (
-        <Rise key={p.id} delay={i * 70}>
-          <PostCard post={p} />
-        </Rise>
-      ))}
-      <Rise delay={posts.length * 70}>
-        <CaughtUp />
-      </Rise>
+      {tab === 'groups' ? (
+        <GroupsTab />
+      ) : (
+        <>
+          <Tap accessibilityRole="button" onPress={() => router.push('/compose')} style={styles.composer}>
+            <MeAvatar size={38} />
+            <Text style={styles.composerText}>Share new work or find collaborators…</Text>
+            <Icon name="image" size={20} color={colors.olive} />
+          </Tap>
+          {live ? (
+            <LiveFeed />
+          ) : (
+            <>
+              {userPosts
+                .filter((p) => !p.groupId)
+                .map((p) => (
+                  <Rise key={p.id}>
+                    <MyPost post={p} />
+                  </Rise>
+                ))}
+              {posts.map((p, i) => (
+                <Rise key={p.id} delay={i * 70}>
+                  <PostCard post={p} />
+                </Rise>
+              ))}
+            </>
+          )}
+          <Rise delay={posts.length * 70}>
+            <CaughtUp />
+          </Rise>
+        </>
+      )}
     </Screen>
   );
 }
@@ -85,10 +125,41 @@ function PostCard({ post: p }: { post: Post }) {
           accessibilityLabel={`Message ${p.name}`}
           style={{ width: 44, paddingHorizontal: 0 }}
           icon={<Icon name="chat" size={18} />}
-          onPress={() => showToast('Messaging is coming in the full app.')}
+          onPress={() => router.push('/messages')}
         />
       </View>
     </Card>
+  );
+}
+
+/** Your posts and the people you follow, from the database. Reloads when you come back to it. */
+function LiveFeed() {
+  const { data, loading, error, reload } = useLoad(fetchTimeline, []);
+  const first = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (first.current) first.current = false;
+      else reload();
+    }, [reload]),
+  );
+
+  if (loading && !data) return <ActivityIndicator color={colors.forest} style={{ marginVertical: 24 }} />;
+  if (error) return <Text style={[text.sub, { textAlign: 'center' }]}>Couldn’t load your timeline: {error}</Text>;
+  if (!data?.length)
+    return (
+      <Card style={{ padding: 18, gap: 6 }}>
+        <Text style={text.strong}>Your timeline is quiet</Text>
+        <Text style={text.sub}>Follow people in Discover and their posts show up here, newest first.</Text>
+      </Card>
+    );
+  return (
+    <>
+      {data.map((item, i) => (
+        <Rise key={item.post.id} delay={Math.min(i, 6) * 60}>
+          <LivePostCard item={item} />
+        </Rise>
+      ))}
+    </>
   );
 }
 
@@ -140,7 +211,20 @@ function CaughtUp() {
 }
 
 const styles = StyleSheet.create({
-  headerWrap: { borderBottomWidth: 1, borderBottomColor: colors.line },
+  headerWrap: { borderBottomWidth: 1, borderBottomColor: colors.line, paddingBottom: 12 },
+  inbox: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center' },
+  tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: 16 },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 38,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: colors.line2,
+  },
+  tabText: { fontFamily: fonts.body600, fontSize: 12.5, color: colors.forest },
   order: {
     flexDirection: 'row',
     alignItems: 'center',

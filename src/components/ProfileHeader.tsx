@@ -1,8 +1,10 @@
 // The profile's customizable header: a cover (color, photo or your own upload) with an optional pattern.
 import * as ImagePicker from 'expo-image-picker';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ImageSourcePropType, Platform, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { signedUrls, uploadImage } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { HeaderStyle, useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 import { Icon } from './Icon';
@@ -27,8 +29,17 @@ const patterns: { id: HeaderStyle['pattern']; label: string }[] = [
 ];
 
 const CUSTOM = 'custom:';
+// A cover uploaded to storage: shown through a short-lived signed link.
+const FILE = 'file:';
 
-function resolveCover(id: string): Cover {
+function useCover(id: string): Cover {
+  const [url, setUrl] = useState<string | undefined>();
+  const path = id.startsWith(FILE) ? id.slice(FILE.length) : null;
+  useEffect(() => {
+    if (!path) return setUrl(undefined);
+    signedUrls('media', [path]).then((urls) => setUrl(urls[path]));
+  }, [path]);
+  if (path) return { id, label: 'Your upload', bg: colors.ink, image: url ? { uri: url } : undefined };
   if (id.startsWith(CUSTOM)) return { id, label: 'Your upload', bg: colors.ink, image: { uri: id.slice(CUSTOM.length) } };
   return covers.find((c) => c.id === id) ?? covers[0];
 }
@@ -38,7 +49,7 @@ export const COVER_HEIGHT = 128;
 /** The cover banner itself. */
 export function CoverBanner({ height = COVER_HEIGHT }: { height?: number }) {
   const { header } = useDemo();
-  const cover = resolveCover(header.cover);
+  const cover = useCover(header.cover);
   const ink = cover.light ? colors.forest : colors.lime;
   return (
     <View style={{ height, backgroundColor: cover.bg, overflow: 'hidden' }}>
@@ -67,7 +78,13 @@ function PatternLayer({ pattern, color }: { pattern: HeaderStyle['pattern']; col
 
 /** Slide-down panel for choosing the cover and pattern. */
 export function CustomizePanel({ onDone }: { onDone: () => void }) {
-  const { header, setHeader, showToast } = useDemo();
+  const { header, setHeader: setLocal, showToast } = useDemo();
+  const { live, saveMe } = useAuth();
+  // With an account, every change is saved to your profile right away.
+  const setHeader = (change: Partial<HeaderStyle>) => {
+    setLocal(change);
+    if (live) saveMe({ header: { ...header, ...change } }).catch((e) => showToast((e as Error).message));
+  };
   const a = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(a, { toValue: 1, duration: 260, useNativeDriver: Platform.OS !== 'web' }).start();
@@ -75,7 +92,14 @@ export function CustomizePanel({ onDone }: { onDone: () => void }) {
 
   const upload = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [3, 1] });
-    if (!result.canceled) setHeader({ cover: CUSTOM + result.assets[0].uri });
+    if (result.canceled) return;
+    const uri = result.assets[0].uri;
+    if (!live) return setHeader({ cover: CUSTOM + uri });
+    try {
+      setHeader({ cover: FILE + (await uploadImage('media', uri)) });
+    } catch (e) {
+      showToast((e as Error).message);
+    }
   };
 
   return (
@@ -112,7 +136,7 @@ export function CustomizePanel({ onDone }: { onDone: () => void }) {
           accessibilityLabel="Upload a cover photo"
           onPress={upload}
           hitSlop={4}
-          style={[styles.swatch, styles.upload, header.cover.startsWith(CUSTOM) && styles.swatchOn]}
+          style={[styles.swatch, styles.upload, (header.cover.startsWith(CUSTOM) || header.cover.startsWith(FILE)) && styles.swatchOn]}
         >
           <Icon name="image" size={18} color={colors.lime} />
         </Tap>

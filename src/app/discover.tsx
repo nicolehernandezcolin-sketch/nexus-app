@@ -1,9 +1,13 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
+import { ActivityIndicator, Animated, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { PageHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { ArtBlock, Chip, Pill, Rise, Switch, Tap, text } from '../components/ui';
 import { Creator, creators, Discipline, disciplines, ProjectType, projectTypes, Skill, skills } from '../data/content';
+import { discoverPeople, useLoad } from '../lib/api';
+import { useAuth } from '../lib/auth';
+import { colorFor, initialsOf } from '../lib/format';
 import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
@@ -51,6 +55,37 @@ function score(c: Creator, m: Match): Scored | null {
   return { creator: c, percent: Math.round((points / possible) * 100), reasons };
 }
 
+const disciplineFor = (roles: string[]): Creator['discipline'] => {
+  if (roles.some((r) => ['Musician', 'Producer'].includes(r))) return 'Music';
+  if (roles.includes('Filmmaker')) return 'Film';
+  if (roles.includes('Dancer')) return 'Movement';
+  return 'Visual';
+};
+
+/** A real member from discover_people(), shaped like the demo's creators. */
+function toCreator(r: Awaited<ReturnType<typeof discoverPeople>>[number]): Creator {
+  return {
+    id: r.id,
+    name: r.name || 'New member',
+    role: [r.roles.slice(0, 2).join(' · ') || r.tagline, r.location].filter(Boolean).join(' · '),
+    discipline: disciplineFor(r.roles),
+    openTo: r.open_to[0] ? `Open to ${r.open_to[0].toLowerCase()}` : 'Open to collaborating',
+    art: {
+      bg: colorFor(r.id),
+      fg: colors.lime,
+      height: 150,
+      label: initialsOf(r.name),
+      image: r.avatarUrl ? { uri: r.avatarUrl } : undefined,
+      plain: true,
+    },
+    skills: r.skills as Skill[],
+    projects: r.projects as ProjectType[],
+    city: r.location,
+    sharedAt: r.shared_at,
+    mutuals: r.mutuals,
+  };
+}
+
 const hasCommonLink = (c: Creator) => c.sharedAt.length > 0 || c.mutuals.length > 0;
 
 /** The greyed-out line on a card saying what you have in common. */
@@ -82,8 +117,12 @@ export default function Discover() {
   const [mutualsOnly, setMutualsOnly] = useState(false);
   const [match, setMatch] = useState<Match>({ needs: [], project: null, nearby: false });
 
+  const { live } = useAuth();
+  const people = useLoad(async () => (live ? (await discoverPeople()).map(toCreator) : creators), [live]);
+  const source = people.data ?? (live ? [] : creators);
+
   const q = query.trim().toLowerCase();
-  const base = creators.filter(
+  const base = source.filter(
     (c) =>
       (filter === 'All' || c.discipline === filter) &&
       (!mutualsOnly || hasCommonLink(c)) &&
@@ -169,7 +208,10 @@ export default function Discover() {
         </View>
       ) : null}
 
-      {scored.length === 0 ? (
+      {live && people.loading && !people.data ? <ActivityIndicator color={colors.forest} style={{ marginVertical: 24 }} /> : null}
+      {live && people.error ? <Text style={[text.sub, { textAlign: 'center' }]}>Couldn’t load Discover: {people.error}</Text> : null}
+
+      {scored.length === 0 && !(live && people.loading) ? (
         <Text style={[text.sub, { textAlign: 'center', marginVertical: 24 }]}>
           {matching || mutualsOnly ? 'No one matches all of that yet. Try fewer filters.' : 'No one matches yet. Try another word or filter.'}
         </Text>
@@ -178,7 +220,7 @@ export default function Discover() {
           {columns.map((col, c) => (
             <View key={c} style={styles.col}>
               {col.map((s, i) => (
-                <Rise key={`${s.creator.name}-${matching}`} delay={(i * 2 + c) * 60 + 100}>
+                <Rise key={`${s.creator.id ?? s.creator.name}-${matching}`} delay={(i * 2 + c) * 60 + 100}>
                   <CreatorTile scored={s} showMatch={matching} />
                 </Rise>
               ))}
@@ -266,7 +308,11 @@ function CreatorTile({ scored: { creator: c, percent, reasons }, showMatch }: { 
     <Tap
       accessibilityRole="button"
       accessibilityLabel={showMatch ? `${c.name}, ${percent}% match` : c.name}
-      onPress={() => showToast(`**${c.name}** is ${c.openTo.toLowerCase()}. In the full app you’d see their work here.`)}
+      onPress={() =>
+        c.id
+          ? router.push({ pathname: '/person/[id]', params: { id: c.id } })
+          : showToast(`**${c.name}** is ${c.openTo.toLowerCase()}. In the full app you’d see their work here.`)
+      }
       style={styles.tile}
     >
       <View>

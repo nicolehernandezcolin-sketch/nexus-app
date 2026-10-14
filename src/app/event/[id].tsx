@@ -1,14 +1,17 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../../components/Chrome';
-import { TeamList } from '../../components/Team';
+import { LiveTeamList, TeamList } from '../../components/Team';
 import { Icon, IconName } from '../../components/Icon';
 import { FairPlay, PriceBreakdown, QuantityStepper } from '../../components/Tickets';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, SectionTitle, Tap, text } from '../../components/ui';
 import { events, NexusEvent, TicketTier } from '../../data/content';
 import { money, TICKET_LIMIT } from '../../data/fees';
+import { enterDrawing as enterLiveDrawing, fetchEvent, setRsvp, useLoad } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
+import { LiveEvent, toNexusEvent } from '../../lib/mappers';
 import { useDemo } from '../../state/DemoState';
 import { colors, fonts } from '../../theme';
 
@@ -18,12 +21,31 @@ export async function generateStaticParams(): Promise<Record<string, string>[]> 
 
 export default function EventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { live } = useAuth();
+  if (live) return <LiveEventScreen id={id} />;
   const event = events.find((e) => e.id === id);
   if (!event) return <NotFound />;
   return <EventDetail event={event} />;
 }
 
-function EventDetail({ event: e }: { event: NexusEvent }) {
+function LiveEventScreen({ id }: { id: string }) {
+  const loaded = useLoad(async () => {
+    const e = await fetchEvent(id);
+    return e ? toNexusEvent(e) : null;
+  }, [id]);
+  if (loaded.loading && !loaded.data) {
+    return (
+      <Screen header={<BackHeader label="Back" fallback="/events" />} contentStyle={{ padding: 24 }}>
+        <ActivityIndicator color={colors.forest} />
+      </Screen>
+    );
+  }
+  if (!loaded.data) return <NotFound />;
+  return <EventDetail event={loaded.data} onChanged={loaded.reload} />;
+}
+
+function EventDetail({ event: e, onChanged }: { event: NexusEvent; onChanged?: () => void }) {
+  const liveRow = (e as Partial<LiveEvent>).live;
   const insets = useSafeAreaInsets();
   return (
     <Screen header={<BackHeader label="Back" fallback="/events" />} contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}>
@@ -54,14 +76,16 @@ function EventDetail({ event: e }: { event: NexusEvent }) {
         <Text style={text.small}>{e.friendsText}</Text>
       </View>
 
-      <TeamList workId={e.id} title="Who’s putting it on" />
+      {liveRow ? <LiveTeamList eventId={liveRow.id} title="Who’s putting it on" /> : <TeamList workId={e.id} title="Who’s putting it on" />}
 
       {e.sale.kind === 'tickets' ? <TicketPicker event={e} tiers={e.sale.tiers} /> : null}
-      {e.sale.kind === 'free' ? <FreeRsvp event={e} note={e.sale.note} /> : null}
-      {e.sale.kind === 'drawing' ? <Drawing event={e} note={e.sale.note} /> : null}
+      {e.sale.kind === 'free' ? <FreeRsvp event={e} note={e.sale.note} onChanged={onChanged} /> : null}
+      {e.sale.kind === 'drawing' ? <Drawing event={e} note={e.sale.note} onChanged={onChanged} /> : null}
 
       <FairPlay />
-      <Text style={[text.small, { textAlign: 'center' }]}>Demo prices. No card is charged.</Text>
+      <Text style={[text.small, { textAlign: 'center' }]}>
+        {liveRow ? 'Ticket payments open soon. Free RSVPs and drawings work now.' : 'Demo prices. No card is charged.'}
+      </Text>
     </Screen>
   );
 }
@@ -139,9 +163,44 @@ function TicketPicker({ event: e, tiers }: { event: NexusEvent; tiers: TicketTie
   );
 }
 
-function FreeRsvp({ event: e, note }: { event: NexusEvent; note: string }) {
+function FreeRsvp({ event: e, note, onChanged }: { event: NexusEvent; note: string; onChanged?: () => void }) {
   const { tickets, buyTickets, showToast } = useDemo();
-  const going = tickets.some((t) => t.eventId === e.id);
+  const liveRow = (e as Partial<LiveEvent>).live;
+  const going = liveRow ? liveRow.mine : tickets.some((t) => t.eventId === e.id);
+  const rsvp = async (yes: boolean) => {
+    if (!liveRow) {
+      buyTickets(e.id, { id: 'rsvp', name: 'Free RSVP', price: 0 }, 1);
+      showToast('You’re on the list. See you **in person**.');
+      return;
+    }
+    try {
+      await setRsvp(liveRow.id, yes);
+      if (yes) showToast('You’re on the list. See you **in person**.');
+      onChanged?.();
+    } catch (err) {
+      showToast((err as Error).message);
+    }
+  };
+  if (liveRow) {
+    return (
+      <Card style={styles.panel}>
+        <SectionTitle>Free entry</SectionTitle>
+        <Text style={text.sub}>{note}</Text>
+        {going ? (
+          <>
+            <View style={[styles.limit, { backgroundColor: colors.lime }]}>
+              <Icon name="check" size={18} strokeWidth={2.6} />
+              <Text style={[text.strong, { flex: 1, fontSize: 14 }]}>You’re going</Text>
+            </View>
+            <Button variant="ghost" label="Can’t make it" onPress={() => rsvp(false)} />
+          </>
+        ) : (
+          <Button variant="big" label="RSVP" onPress={() => rsvp(true)} />
+        )}
+        <Text style={text.small}>Free events have no fees. One RSVP per member.</Text>
+      </Card>
+    );
+  }
   return (
     <Card style={styles.panel}>
       <SectionTitle>Free entry</SectionTitle>
@@ -163,9 +222,19 @@ function FreeRsvp({ event: e, note }: { event: NexusEvent; note: string }) {
   );
 }
 
-function Drawing({ event: e, note }: { event: NexusEvent; note: string }) {
-  const { drawings, enterDrawing, showToast } = useDemo();
-  const entered = !!drawings[e.id];
+function Drawing({ event: e, note, onChanged }: { event: NexusEvent; note: string; onChanged?: () => void }) {
+  const { drawings, enterDrawing: enterDemo, showToast } = useDemo();
+  const liveRow = (e as Partial<LiveEvent>).live;
+  const entered = liveRow ? liveRow.entered : !!drawings[e.id];
+  const enterDrawing = async (id: string) => {
+    if (!liveRow) return enterDemo(id);
+    try {
+      await enterLiveDrawing(liveRow.id);
+      onChanged?.();
+    } catch (err) {
+      showToast((err as Error).message);
+    }
+  };
   const steps = ['Enter before sales open. It doesn’t matter how fast.', 'One entry per verified person, equal odds. People who came to past Nexus events are drawn first.', 'Winners get a 24-hour window to buy at face value.'];
   return (
     <Card style={styles.panel}>

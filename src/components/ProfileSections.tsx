@@ -70,14 +70,26 @@ export function ProfileTabs() {
 
 /* ---------- Work modules ---------- */
 
-export function WorkModules() {
+/** The profile's work. Pass `source` to show real modules from the database instead of the demo's. */
+export function WorkModules({ source }: { source?: WorkModule[] }) {
   const { moduleOrder, hiddenModules, showToast } = useDemo();
   const [organizing, setOrganizing] = useState(false);
 
-  const modules = moduleOrder
-    .map((id) => workModules.find((m) => m.id === id))
-    .filter((m): m is WorkModule => !!m && (organizing || !hiddenModules[m.id]));
-  const hiddenCount = workModules.filter((m) => hiddenModules[m.id]).length;
+  const modules = source
+    ? source
+    : moduleOrder
+        .map((id) => workModules.find((m) => m.id === id))
+        .filter((m): m is WorkModule => !!m && (organizing || !hiddenModules[m.id]));
+  const hiddenCount = source ? 0 : workModules.filter((m) => hiddenModules[m.id]).length;
+
+  if (source && !source.length) {
+    return (
+      <Card style={{ padding: 18, gap: 6 }}>
+        <Text style={text.strong}>No work on your profile yet</Text>
+        <Text style={text.sub}>Albums, films, shows and events you add appear here in modules.</Text>
+      </Card>
+    );
+  }
 
   return (
     <View style={{ gap: 12 }}>
@@ -87,15 +99,17 @@ export function WorkModules() {
             ? 'Reorder, hide or show modules on your profile.'
             : `${modules.length} modules${hiddenCount ? ` · ${hiddenCount} hidden` : ''}`}
         </Text>
-        <Button
-          variant={organizing ? 'primary' : 'ghost'}
-          label={organizing ? 'Done' : 'Organize'}
-          style={{ height: 36, paddingHorizontal: 14 }}
-          onPress={() => {
-            if (organizing) showToast('Your profile is **updated**.');
-            setOrganizing(!organizing);
-          }}
-        />
+        {source ? null : (
+          <Button
+            variant={organizing ? 'primary' : 'ghost'}
+            label={organizing ? 'Done' : 'Organize'}
+            style={{ height: 36, paddingHorizontal: 14 }}
+            onPress={() => {
+              if (organizing) showToast('Your profile is **updated**.');
+              setOrganizing(!organizing);
+            }}
+          />
+        )}
       </View>
 
       {modules.map((m, i) => (

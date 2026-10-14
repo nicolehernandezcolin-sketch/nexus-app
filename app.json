@@ -20,7 +20,7 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "output": "static",
+      "output": "single",
       "name": "Nexus App Demo",
       "shortName": "Nexus",
       "themeColor": "#3E4A26",
@@ -28,7 +28,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-sqlite"
     ],
     "scheme": "nexus",
     "backgroundColor": "#F2EEE4",

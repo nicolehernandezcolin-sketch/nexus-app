@@ -1,12 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Image, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../../components/Chrome';
 import { TeamList } from '../../components/Team';
+import { openProfile } from '../../components/Feed';
 import { Icon } from '../../components/Icon';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, SectionTitle, Tap, text } from '../../components/ui';
 import { allWork, events, profile, profilePosts } from '../../data/content';
 import { saleLabel } from '../../data/fees';
+import { fetchWorkItem, useLoad } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
 import { colors, fonts } from '../../theme';
 
 export async function generateStaticParams(): Promise<Record<string, string>[]> {
@@ -15,6 +18,58 @@ export async function generateStaticParams(): Promise<Record<string, string>[]> 
 
 export default function WorkScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { live } = useAuth();
+  if (live) return <LiveWork id={id} />;
+  return <DemoWork id={id} />;
+}
+
+/** A piece of work from the database. */
+function LiveWork({ id }: { id: string }) {
+  const { me } = useAuth();
+  const insets = useSafeAreaInsets();
+  const loaded = useLoad(() => fetchWorkItem(id), [id]);
+  if (!loaded.data) {
+    return (
+      <Screen header={<BackHeader label="Back" fallback="/profile" />} contentStyle={{ padding: 24 }}>
+        {loaded.error ? <Text style={text.sub}>We couldn’t find that piece.</Text> : <ActivityIndicator color={colors.forest} />}
+      </Screen>
+    );
+  }
+  const { item, moduleTitle, owner, imageUrl, event } = loaded.data;
+  return (
+    <Screen header={<BackHeader label="Back" fallback="/profile" />} contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}>
+      <ArtBlock
+        art={{ bg: colors.forest, fg: colors.lime, height: 220, label: item.title, plain: true, image: imageUrl ? { uri: imageUrl } : undefined }}
+        radius={22}
+      />
+      <View style={{ gap: 8 }}>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {item.kind ? <Pill label={item.kind} bg={colors.limeSoft} fg={colors.forest} /> : null}
+          <Pill label={moduleTitle} bg={colors.stone} fg={colors.forest} />
+        </View>
+        <Text style={styles.title} accessibilityRole="header">
+          {item.title}
+        </Text>
+        <Tap accessibilityRole="link" onPress={() => openProfile(owner.id, me?.id)} style={styles.byline}>
+          <Text style={[text.strong, { fontSize: 14 }]}>{owner.name}</Text>
+        </Tap>
+      </View>
+      {item.detail ? <Text style={text.sub}>{item.detail}</Text> : null}
+      {item.about ? <Text style={text.body}>{item.about}</Text> : null}
+      {event ? (
+        <Tap accessibilityRole="button" onPress={() => router.push({ pathname: '/event/[id]', params: { id: event.slug ?? event.id } })} style={styles.eventLink}>
+          <Icon name="ticket" size={22} color={colors.lime} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.eventTitle}>{event.title}</Text>
+            <Text style={styles.eventMeta}>{event.when_text}</Text>
+          </View>
+        </Tap>
+      ) : null}
+    </Screen>
+  );
+}
+
+function DemoWork({ id }: { id: string }) {
   const insets = useSafeAreaInsets();
   const work = allWork.find((w) => w.id === id);
 

@@ -3,6 +3,10 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { personById, teams } from '../data/content';
+import { fetchTeam, useLoad } from '../lib/api';
+import { useAuth } from '../lib/auth';
+import { colorFor, initialsOf } from '../lib/format';
+import { openProfile } from './Feed';
 import { colors, fonts } from '../theme';
 import { Icon } from './Icon';
 import { Avatar, Card, SectionTitle, Tap, text } from './ui';
@@ -73,6 +77,34 @@ export function TeamList({ workId, title = 'Team' }: { workId: string; title?: s
             </Tap>
           );
         })}
+      </Card>
+    </View>
+  );
+}
+
+/** A real event's team, from the database. */
+export function LiveTeamList({ eventId, title = 'Team' }: { eventId: string; title?: string }) {
+  const { me } = useAuth();
+  const team = useLoad(() => fetchTeam(eventId), [eventId]);
+  if (!team.data?.length) return null;
+  return (
+    <View style={{ gap: 10 }}>
+      <SectionTitle>{title}</SectionTitle>
+      <Card style={{ paddingVertical: 4 }}>
+        {team.data.map((m, i) => (
+          <Tap key={m.person} accessibilityRole="link" onPress={() => openProfile(m.person, me?.id)} style={[styles.row, i > 0 && styles.divider]}>
+            <Avatar
+              initials={initialsOf(m.profile.name)}
+              photo={m.avatarUrl ? { uri: m.avatarUrl } : undefined}
+              bg={colorFor(m.person)}
+              size={40}
+            />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[text.strong, { fontSize: 14.5 }]}>{m.profile.name}</Text>
+              <Text style={text.small}>{m.part}</Text>
+            </View>
+          </Tap>
+        ))}
       </Card>
     </View>
   );

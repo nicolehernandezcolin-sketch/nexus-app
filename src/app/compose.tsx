@@ -1,12 +1,15 @@
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
-import { Avatar, Button, Chip, Tap, text } from '../components/ui';
-import { PostKind, profile } from '../data/content';
+import { MeAvatar } from '../components/Me';
+import { Button, Chip, Tap, text } from '../components/ui';
+import { demoGroups, PostKind } from '../data/content';
+import { createPost, fetchMyGroups, useLoad } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
@@ -20,6 +23,14 @@ const kinds: { kind: PostKind; hint: string }[] = [
 
 export default function Compose() {
   const { addPost, showToast } = useDemo();
+  const { live } = useAuth();
+  const params = useLocalSearchParams<{ group?: string }>();
+  const [audience, setAudience] = useState<string | null>(params.group ?? null);
+  const groups = useLoad(
+    async () => (live ? (await fetchMyGroups()).map((g) => ({ id: g.id, name: g.name })) : demoGroups.map((g) => ({ id: g.id, name: g.name }))),
+    [live],
+  );
+  const groupName = groups.data?.find((g) => g.id === audience)?.name;
   const insets = useSafeAreaInsets();
   const [kind, setKind] = useState<PostKind>('New work');
   const [body, setBody] = useState('');
@@ -30,10 +41,28 @@ export default function Compose() {
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
-  const ready = body.trim().length > 0;
-  const post = () => {
-    addPost({ kind, text: body.trim(), image });
-    showToast(image ? 'Posted. **AI protection** is on for your photo.' : 'Posted to your **followers’ timelines**.');
+  const [busy, setBusy] = useState(false);
+  const ready = body.trim().length > 0 && !busy;
+  const post = async () => {
+    if (live) {
+      setBusy(true);
+      try {
+        await createPost(kind, body.trim(), image, audience ?? undefined);
+      } catch (e) {
+        showToast((e as Error).message);
+        setBusy(false);
+        return;
+      }
+    } else {
+      addPost({ kind, text: body.trim(), image, groupId: audience ?? undefined });
+    }
+    showToast(
+      audience
+        ? `Shared privately with **${groupName ?? 'your group'}**.`
+        : image
+          ? 'Posted. **AI protection** is on for your photo.'
+          : 'Posted to your **followers’ timelines**.',
+    );
     if (router.canGoBack()) router.back();
     else router.replace('/timeline');
   };
@@ -44,10 +73,40 @@ export default function Compose() {
       contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}
     >
       <View style={styles.titleRow}>
-        <Avatar initials={profile.initials} photo={profile.photo} bg={colors.lime} fg={colors.ink} size={40} />
+        <MeAvatar size={40} />
         <Text style={styles.title} accessibilityRole="header">
           New post
         </Text>
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <Text style={styles.audienceLabel}>Who sees this</Text>
+        <View style={styles.kinds}>
+          <Tap
+            accessibilityRole="radio"
+            accessibilityState={{ selected: audience === null }}
+            onPress={() => setAudience(null)}
+            style={[styles.audience, audience === null && styles.audienceOn]}
+          >
+            <Icon name="users" size={15} color={audience === null ? colors.lime : colors.forest} />
+            <Text style={[styles.audienceText, audience === null && { color: colors.lime }]}>Everyone on Nexus</Text>
+          </Tap>
+          {(groups.data ?? []).map((g) => {
+            const on = audience === g.id;
+            return (
+              <Tap
+                key={g.id}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: on }}
+                onPress={() => setAudience(g.id)}
+                style={[styles.audience, on && styles.audienceOn]}
+              >
+                <Icon name="lock" size={14} color={on ? colors.lime : colors.forest} strokeWidth={2.4} />
+                <Text style={[styles.audienceText, on && { color: colors.lime }]}>{g.name}</Text>
+              </Tap>
+            );
+          })}
+        </View>
       </View>
 
       <View style={styles.kinds}>
@@ -86,13 +145,21 @@ export default function Compose() {
       )}
 
       <View style={styles.protect}>
-        <Icon name="shield" size={18} color={colors.lime} />
-        <Text style={styles.protectText}>Uploads are marked do-not-train, watermarked and only shown to signed-in members.</Text>
+        <Icon name={audience ? 'lock' : 'shield'} size={18} color={colors.lime} />
+        <Text style={styles.protectText}>
+          {audience
+            ? `Private: only ${groupName ?? 'group'} members can see this post or open its photo. It never reaches Discover, your profile or AI crawlers.`
+            : 'Uploads are marked do-not-train, watermarked and only shown to signed-in members.'}
+        </Text>
       </View>
 
-      <Text style={text.small}>Goes to your followers’ timelines, newest first, and to the Posts tab on your profile.</Text>
+      <Text style={text.small}>
+        {audience
+          ? 'Want it one to one instead? Send it in Messages.'
+          : 'Goes to your followers’ timelines, newest first, and to the Posts tab on your profile.'}
+      </Text>
 
-      <Button variant="big" label="Post" onPress={ready ? post : undefined} style={!ready && { opacity: 0.45 }} />
+      <Button variant="big" label={busy ? 'Posting…' : 'Post'} onPress={ready ? post : undefined} style={!ready && { opacity: 0.45 }} />
     </Screen>
   );
 }
@@ -102,6 +169,19 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   title: { fontFamily: fonts.display800, fontSize: 28, letterSpacing: -0.6, color: colors.ink },
   kinds: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  audienceLabel: { fontFamily: fonts.body600, fontSize: 13, color: colors.forest },
+  audience: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: colors.line2,
+  },
+  audienceOn: { backgroundColor: colors.forest, borderColor: colors.forest },
+  audienceText: { fontFamily: fonts.body600, fontSize: 13.5, color: colors.forest },
   editor: { backgroundColor: colors.paper, borderRadius: 20, borderWidth: 1.5, borderColor: colors.line, padding: 14, gap: 6 },
   input: {
     minHeight: 140,

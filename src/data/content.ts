@@ -4,7 +4,15 @@ import { ImageSourcePropType } from 'react-native';
 import { colors } from '../theme';
 
 /** A cover: a photo when we have one, otherwise a labelled color block. */
-export type Art = { bg: string; fg: string; height: number; label: string; image?: ImageSourcePropType };
+export type Art = {
+  bg: string;
+  fg: string;
+  height: number;
+  label: string;
+  image?: ImageSourcePropType;
+  /** Real content: show the label without the "(sample)" note. */
+  plain?: boolean;
+};
 
 export const roles = [
   'Musician',
@@ -135,6 +143,8 @@ export type Creator = {
   sharedAt: string[];
   /** People you both know on Nexus. */
   mutuals: string[];
+  /** Set for real members: their profile id. */
+  id?: string;
 };
 
 export const creators: Creator[] = [
@@ -654,4 +664,100 @@ export const aiProtections = [
   'Invisible watermark ties each file to your account',
   'Full-quality files only shown to signed-in members',
   'Scraping is rate-limited and blocked when detected',
+];
+
+/* ---------- Private groups and messages (demo) ---------- */
+
+export type DemoGroup = { id: string; name: string; about: string; memberCount: number; members: string[]; owner: boolean };
+
+export const demoGroups: DemoGroup[] = [
+  {
+    id: 'film-collective',
+    name: 'Nexus Film Collective',
+    about: 'Filmmakers from the 1st Edition sharing cuts and stills before they go public.',
+    memberCount: 14,
+    members: ['LP', 'KN', 'RO', 'MV'],
+    owner: true,
+  },
+  {
+    id: 'latin-jazz-band',
+    name: 'Latin Jazz Night band',
+    about: 'Charts, set lists and rehearsal takes for the November lineup.',
+    memberCount: 7,
+    members: ['AO', 'JE', 'LH'],
+    owner: true,
+  },
+];
+
+export const demoGroupPosts: { group: string; post: Post }[] = [
+  {
+    group: 'film-collective',
+    post: {
+      id: 'g1',
+      initials: 'LP',
+      avatar: colors.ink,
+      name: 'Lena Park',
+      firstName: 'Lena',
+      role: 'Filmmaker',
+      time: '2h',
+      kind: 'New work',
+      text: 'Rough cut of the Barrio Logan video. Not public yet, so it stays in here. Notes welcome on the second half.',
+      art: { bg: colors.forest, fg: colors.lime, height: 170, label: 'Rough cut still' },
+      cta: 'Give notes',
+    },
+  },
+  {
+    group: 'film-collective',
+    post: {
+      id: 'g2',
+      initials: 'RO',
+      avatar: colors.olive,
+      name: 'Ruben Ortiz',
+      firstName: 'Ruben',
+      role: 'Editor and colorist',
+      time: '1d',
+      kind: 'Looking for',
+      text: 'Anyone have a LUT pack they trust for night exteriors? Trying to keep skin tones warm under sodium lights.',
+      cta: 'Reply',
+    },
+  },
+  {
+    group: 'latin-jazz-band',
+    post: {
+      id: 'g3',
+      initials: 'AO',
+      avatar: colors.olive,
+      name: 'Andre Okafor',
+      firstName: 'Andre',
+      role: 'Bassist',
+      time: '5h',
+      kind: 'New work',
+      text: 'Rehearsal take of the montuno section. Tempo felt right at 112.',
+      art: { bg: colors.lime, fg: colors.ink, height: 120, label: 'Rehearsal audio' },
+      cta: 'Listen',
+    },
+  },
+];
+
+export type DemoMessage = { from: 'me' | 'them'; body: string; time: string };
+export type DemoConversation = { id: string; name: string; initials: string; avatar: string; messages: DemoMessage[] };
+
+export const demoConversations: DemoConversation[] = [
+  {
+    id: 'kai',
+    name: 'Kai Nakamura',
+    initials: 'KN',
+    avatar: colors.forest,
+    messages: [
+      { from: 'them', body: 'Saw the Pa Ya still. Would you share the full-res frame here instead of posting it?', time: '2h' },
+      { from: 'me', body: 'Yes, sending it here so it stays between us.', time: '1h' },
+    ],
+  },
+  {
+    id: 'sofia',
+    name: 'Sofia Ramos',
+    initials: 'SR',
+    avatar: colors.olive,
+    messages: [{ from: 'them', body: 'I’d love to sing on something for Latin Jazz Night. Can I send a demo?', time: '1d' }],
+  },
 ];

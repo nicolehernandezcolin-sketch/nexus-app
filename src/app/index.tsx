@@ -1,29 +1,54 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { Button, Card, Chip, Pill, SectionTitle, Switch, text } from '../components/ui';
 import { roles, welcomeOptions } from '../data/content';
+import { useAuth } from '../lib/auth';
 import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Welcome() {
   const demo = useDemo();
+  const { live, saveMe } = useAuth();
   const insets = useSafeAreaInsets();
+  const [saving, setSaving] = useState(false);
+
+  // With a real account, setup saves what you make and what you opted into.
+  const enter = async () => {
+    if (live) {
+      setSaving(true);
+      try {
+        await saveMe({
+          roles: roles.filter((r) => demo.roles[r]),
+          suggest: !!demo.options.suggest,
+          discoverable: !!demo.options.discover,
+          personalize: !!demo.options.personal,
+          onboarded: true,
+        });
+      } catch (e) {
+        demo.showToast((e as Error).message);
+        setSaving(false);
+        return;
+      }
+    }
+    router.replace('/timeline');
+  };
 
   return (
     <Screen
       contentStyle={styles.body}
       footer={
         <View style={[styles.footer, { paddingBottom: 24 + insets.bottom }]}>
-          <Button variant="big" label="Enter your timeline" onPress={() => router.replace('/timeline')} />
+          <Button variant="big" label={saving ? 'Saving…' : 'Enter your timeline'} onPress={saving ? undefined : enter} />
         </View>
       }
     >
       <View style={styles.row}>
         <Text style={styles.logo}>NEXUS</Text>
-        <Pill label="Demo" bg={colors.lime} fg={colors.ink} />
+        {live ? null : <Pill label="Demo" bg={colors.lime} fg={colors.ink} />}
       </View>
 
       <View style={{ gap: 12 }}>

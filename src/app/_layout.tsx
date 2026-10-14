@@ -1,12 +1,13 @@
 import { Archivo_500Medium, Archivo_700Bold, Archivo_800ExtraBold, Archivo_900Black } from '@expo-google-fonts/archivo';
 import { InstrumentSans_400Regular, InstrumentSans_500Medium, InstrumentSans_600SemiBold } from '@expo-google-fonts/instrument-sans';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { router, Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Toast } from '../components/Chrome';
+import { AuthProvider, useAuth } from '../lib/auth';
 import { DemoProvider } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
@@ -24,20 +25,47 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <DemoProvider>
-        <StatusBar style="dark" />
-        <WebFrame>
-          <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.cream } }} />
-          <Toast />
-        </WebFrame>
-      </DemoProvider>
+      <AuthProvider>
+        <DemoProvider>
+          <StatusBar style="dark" />
+          <WebFrame>
+            <Gate />
+            <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.cream } }} />
+            <Toast />
+          </WebFrame>
+        </DemoProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
+}
+
+/**
+ * With a real backend: signed-out visitors go to sign in, new members to setup,
+ * and set-up members past both. The demo has no gate.
+ */
+function Gate() {
+  const { live, ready, session, me } = useAuth();
+  const segments = useSegments();
+  const at = segments[0] as string | undefined;
+
+  useEffect(() => {
+    if (!live || !ready) return;
+    if (!session) {
+      if (at !== 'auth') router.replace('/auth');
+    } else if (me && !me.onboarded) {
+      if (at !== undefined && at !== 'index') router.replace('/');
+    } else if (me && (at === 'auth' || at === undefined || at === 'index')) {
+      router.replace('/timeline');
+    }
+  }, [live, ready, session, me, at]);
+
+  return null;
 }
 
 /** On a wide browser window, show the app in a phone frame beside a short intro. Phones get the app full screen. */
 function WebFrame({ children }: { children: ReactNode }) {
   const { width } = useWindowDimensions();
+  const { live } = useAuth();
   if (Platform.OS !== 'web' || width < 560) return <View style={{ flex: 1 }}>{children}</View>;
 
   return (
@@ -59,7 +87,9 @@ function WebFrame({ children }: { children: ReactNode }) {
               ),
             )}
           </View>
-          <Text style={styles.note}>Interactive demo. Posts and creators are sample content.</Text>
+          <Text style={styles.note}>
+            {live ? 'Members only. Sign up to join.' : 'Interactive demo. Posts and creators are sample content.'}
+          </Text>
         </View>
       ) : null}
       <View style={styles.phone}>

@@ -1,15 +1,31 @@
-import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { PageHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { Avatar, Pill, Rise, Tap } from '../components/ui';
 import { events, NexusEvent } from '../data/content';
 import { saleLabel } from '../data/fees';
+import { fetchEvents, useLoad } from '../lib/api';
+import { useAuth } from '../lib/auth';
+import { LiveEvent, toNexusEvent } from '../lib/mappers';
 import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Events() {
   const { tickets } = useDemo();
+  const { live } = useAuth();
+  const loaded = useLoad(async () => (live ? (await fetchEvents()).map(toNexusEvent) : events), [live]);
+  // Refresh when you come back (e.g. after an RSVP); the first load is already running.
+  const first = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (first.current) first.current = false;
+      else if (live) loaded.reload();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [live]),
+  );
+  const list: NexusEvent[] = loaded.data ?? (live ? [] : events);
   return (
     <Screen
       nav
@@ -31,7 +47,10 @@ export default function Events() {
       }
       contentStyle={styles.list}
     >
-      {events.map((e, i) => (
+      {live && loaded.loading && !loaded.data ? <ActivityIndicator color={colors.forest} style={{ marginVertical: 24 }} /> : null}
+      {live && loaded.error ? <Text style={styles.meta}>Couldn’t load events: {loaded.error}</Text> : null}
+      {live && loaded.data?.length === 0 ? <Text style={styles.meta}>No events yet.</Text> : null}
+      {list.map((e, i) => (
         <Rise key={e.id} delay={i * 80}>
           <EventCard event={e} />
         </Rise>
@@ -48,8 +67,10 @@ function EventCard({ event: e }: { event: NexusEvent }) {
   const fg = dark ? colors.cream : colors.ink;
   const subtle = dark ? colors.creamMuted : colors.muted;
 
-  const mine = tickets.filter((t) => t.eventId === e.id).length;
-  const status = mine ? (e.sale.kind === 'free' ? 'Going' : `${mine} ticket${mine > 1 ? 's' : ''}`) : drawings[e.id] ? 'Entered' : null;
+  const liveRow = (e as Partial<LiveEvent>).live;
+  const mine = liveRow ? (liveRow.mine ? 1 : 0) : tickets.filter((t) => t.eventId === e.id).length;
+  const entered = liveRow ? liveRow.entered : drawings[e.id];
+  const status = mine ? (e.sale.kind === 'free' ? 'Going' : `${mine} ticket${mine > 1 ? 's' : ''}`) : entered ? 'Entered' : null;
   const open = () => router.push({ pathname: '/event/[id]', params: { id: e.id } });
 
   return (

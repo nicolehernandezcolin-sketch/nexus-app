@@ -174,7 +174,7 @@ export function ArtBlock({ art, radius = 16, height, style }: { art: Art; radius
   }
   return (
     <View style={[styles.art, { height: h, backgroundColor: art.bg, borderRadius: radius }, style]}>
-      {h >= 90 ? <Text style={[styles.artText, { color: art.fg }]}>{art.label} (sample)</Text> : null}
+      {h >= 90 ? <Text style={[styles.artText, { color: art.fg }]}>{art.plain ? art.label : `${art.label} (sample)`}</Text> : null}
     </View>
   );
 }
