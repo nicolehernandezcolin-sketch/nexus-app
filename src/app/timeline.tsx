@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { PageHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
-import { ArtBlock, Avatar, Button, Card, Pill, Rise, text } from '../components/ui';
-import { Post, postKindColors, posts } from '../data/content';
-import { useDemo } from '../state/DemoState';
+import { ArtBlock, Avatar, Button, Card, Pill, Rise, Tap, text } from '../components/ui';
+import { Post, postKindColors, posts, profile } from '../data/content';
+import { useDemo, UserPost } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Timeline() {
+  const { userPosts } = useDemo();
   return (
     <Screen
       nav
@@ -25,7 +26,23 @@ export default function Timeline() {
         </View>
       }
       contentStyle={styles.list}
+      overlay={
+        <Tap accessibilityRole="button" accessibilityLabel="New post" onPress={() => router.push('/compose')} style={styles.fab}>
+          <Icon name="plus" size={20} color={colors.ink} strokeWidth={2.6} />
+          <Text style={styles.fabText}>Post</Text>
+        </Tap>
+      }
     >
+      <Tap accessibilityRole="button" onPress={() => router.push('/compose')} style={styles.composer}>
+        <Avatar initials={profile.initials} photo={profile.photo} bg={colors.lime} fg={colors.ink} size={38} />
+        <Text style={styles.composerText}>Share new work or find collaborators…</Text>
+        <Icon name="image" size={20} color={colors.olive} />
+      </Tap>
+      {userPosts.map((p) => (
+        <Rise key={p.id}>
+          <MyPost post={p} />
+        </Rise>
+      ))}
       {posts.map((p, i) => (
         <Rise key={p.id} delay={i * 70}>
           <PostCard post={p} />
@@ -75,6 +92,33 @@ function PostCard({ post: p }: { post: Post }) {
   );
 }
 
+function MyPost({ post: p }: { post: UserPost }) {
+  const { setProfileTab } = useDemo();
+  const kind = postKindColors[p.kind];
+  return (
+    <Card style={[styles.card, { borderWidth: 1.5, borderColor: colors.olive }]}>
+      <View style={styles.author}>
+        <Avatar initials={profile.initials} photo={profile.photo} bg={colors.lime} fg={colors.ink} />
+        <View style={{ flex: 1 }}>
+          <Text style={text.strong}>{profile.name}</Text>
+          <Text style={text.small}>You · Just now</Text>
+        </View>
+        <Pill label={p.kind} bg={kind.bg} fg={kind.fg} />
+      </View>
+      <Text style={text.body}>{p.text}</Text>
+      {p.image ? <Image source={{ uri: p.image }} accessibilityLabel="Your photo" style={styles.photo} resizeMode="cover" /> : null}
+      <Button
+        variant="ghost"
+        label="See it on your profile"
+        onPress={() => {
+          setProfileTab('posts');
+          router.replace('/profile');
+        }}
+      />
+    </Card>
+  );
+}
+
 function CaughtUp() {
   return (
     <View style={styles.end}>
@@ -109,7 +153,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   orderText: { fontFamily: fonts.body600, fontSize: 12, color: colors.forest },
-  list: { padding: 16, paddingBottom: 24, gap: 14 },
+  list: { padding: 16, paddingBottom: 96, gap: 14 },
+  composer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.paper,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    paddingVertical: 8,
+    paddingLeft: 8,
+    paddingRight: 16,
+  },
+  composerText: { flex: 1, fontFamily: fonts.body400, fontSize: 14, color: colors.muted },
+  photo: { width: '100%', height: 220, borderRadius: 16, backgroundColor: colors.stone },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    height: 52,
+    paddingHorizontal: 20,
+    borderRadius: 26,
+    backgroundColor: colors.lime,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  fabText: { fontFamily: fonts.display700, fontSize: 15, color: colors.ink },
   card: { padding: 16, gap: 12 },
   author: { flexDirection: 'row', alignItems: 'center', gap: 11 },
   actions: { flexDirection: 'row', gap: 8 },

@@ -116,23 +116,35 @@ export const posts: Post[] = [
 export const disciplines = ['All', 'Music', 'Film', 'Visual', 'Movement'] as const;
 export type Discipline = (typeof disciplines)[number];
 
+// Talent match vocabulary: what someone can bring, and what kind of project it's for.
+export const skills = ['Vocals', 'Drums', 'Bass', 'Film crew', 'Editing', 'Visual art', 'Choreography', 'Sound'] as const;
+export const projectTypes = ['Music video', 'Live show', 'Album art', 'Short film', 'Stage show'] as const;
+export type Skill = (typeof skills)[number];
+export type ProjectType = (typeof projectTypes)[number];
+
 export type Creator = {
   name: string;
   role: string;
   discipline: Exclude<Discipline, 'All'>;
   openTo: string;
   art: Art;
+  skills: Skill[];
+  projects: ProjectType[];
+  city: string;
+  /** Nexus events you were both checked in at. */
+  sharedEvents: number;
 };
 
 export const creators: Creator[] = [
-  { name: 'Sofia Ramos', role: 'Vocalist · Chula Vista', discipline: 'Music', openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'Live set' } },
-  { name: 'Kai Nakamura', role: 'Cinematographer', discipline: 'Film', openTo: 'Open to music videos', art: { bg: colors.sand, fg: colors.forest, height: 130, label: 'Reel still' } },
-  { name: 'Dani Flores', role: 'Muralist', discipline: 'Visual', openTo: 'Open to commissions', art: { bg: colors.lime, fg: colors.ink, height: 220, label: 'Mural' } },
-  { name: 'Jordan Ellis', role: 'Drummer', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.ink, fg: colors.lime, height: 150, label: 'Studio photo' } },
-  { name: 'Ana Lucero', role: 'Choreographer', discipline: 'Movement', openTo: 'Open to stage work', art: { bg: colors.olive, fg: colors.cream, height: 170, label: 'Rehearsal' } },
-  { name: 'Ruben Ortiz', role: 'Editor and colorist', discipline: 'Film', openTo: 'Open to short films', art: { bg: colors.stone, fg: colors.forest, height: 140, label: 'Color grade' } },
-  { name: 'Mia Chen', role: 'Illustrator', discipline: 'Visual', openTo: 'Open to album art', art: { bg: colors.forest, fg: colors.cream, height: 180, label: 'Illustration' } },
-  { name: 'Luis Herrera', role: 'Sound engineer', discipline: 'Music', openTo: 'Open to live shows', art: { bg: colors.sand, fg: colors.ink, height: 130, label: 'Board photo' } },
+  { name: 'Sofia Ramos', role: 'Vocalist · Chula Vista', discipline: 'Music', openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'Live set' }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'Chula Vista', sharedEvents: 2 },
+  { name: 'Kai Nakamura', role: 'Cinematographer', discipline: 'Film', openTo: 'Open to music videos', art: { bg: colors.sand, fg: colors.forest, height: 130, label: 'Reel still' }, skills: ['Film crew'], projects: ['Music video', 'Short film'], city: 'San Diego', sharedEvents: 3 },
+  { name: 'Dani Flores', role: 'Muralist', discipline: 'Visual', openTo: 'Open to commissions', art: { bg: colors.lime, fg: colors.ink, height: 220, label: 'Mural' }, skills: ['Visual art'], projects: ['Album art', 'Stage show'], city: 'San Diego', sharedEvents: 0 },
+  { name: 'Jordan Ellis', role: 'Drummer', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.ink, fg: colors.lime, height: 150, label: 'Studio photo' }, skills: ['Drums'], projects: ['Live show'], city: 'San Diego', sharedEvents: 2 },
+  { name: 'Ana Lucero', role: 'Choreographer · Tijuana', discipline: 'Movement', openTo: 'Open to stage work', art: { bg: colors.olive, fg: colors.cream, height: 170, label: 'Rehearsal' }, skills: ['Choreography'], projects: ['Stage show', 'Music video'], city: 'Tijuana', sharedEvents: 1 },
+  { name: 'Ruben Ortiz', role: 'Editor and colorist', discipline: 'Film', openTo: 'Open to short films', art: { bg: colors.stone, fg: colors.forest, height: 140, label: 'Color grade' }, skills: ['Editing'], projects: ['Short film', 'Music video'], city: 'San Diego', sharedEvents: 1 },
+  { name: 'Mia Chen', role: 'Illustrator · Los Angeles', discipline: 'Visual', openTo: 'Open to album art', art: { bg: colors.forest, fg: colors.cream, height: 180, label: 'Illustration' }, skills: ['Visual art'], projects: ['Album art'], city: 'Los Angeles', sharedEvents: 0 },
+  { name: 'Luis Herrera', role: 'Sound engineer', discipline: 'Music', openTo: 'Open to live shows', art: { bg: colors.sand, fg: colors.ink, height: 130, label: 'Board photo' }, skills: ['Sound'], projects: ['Live show'], city: 'San Diego', sharedEvents: 1 },
+  { name: 'Andre Okafor', role: 'Bassist · North Park', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.olive, fg: colors.lime, height: 150, label: 'Jam session' }, skills: ['Bass'], projects: ['Live show', 'Music video'], city: 'San Diego', sharedEvents: 3 },
 ];
 
 /* ---------- Events and tickets ---------- */
@@ -378,7 +390,7 @@ export const workModules: WorkModule[] = [
   },
   {
     id: 'curation',
-    title: 'Events I organize',
+    title: 'My events',
     blurb: 'Nexus nights, series and festivals',
     items: [
       {
@@ -463,6 +475,87 @@ export const workModules: WorkModule[] = [
   },
 ];
 
+/* ---------- People and event teams ---------- */
+
+export type Person = {
+  id: string;
+  name: string;
+  initials: string;
+  role: string;
+  avatar: string;
+  photo?: ImageSourcePropType;
+  bio?: string;
+  link?: { label: string; url: string };
+};
+
+// The Nexus team, from the About page of the Nexus website. 'nicole' is the profile owner.
+export const people: Person[] = [
+  { id: 'nicole', name: 'Nicole Hernandez Colin', initials: 'NH', role: 'Creative Director', avatar: colors.lime, photo: require('../../assets/images/nicole.jpg') },
+  { id: 'jenny-xu', name: 'Jenny Xu', initials: 'JX', role: 'Co-Founder', avatar: colors.forest },
+  { id: 'yaxi-zhang', name: 'Yaxi Zhang', initials: 'YZ', role: 'Strategic Finance Lead', avatar: colors.olive },
+  { id: 'robert-gomez', name: 'Robert Gomez', initials: 'RG', role: 'Community Relations Director', avatar: colors.ink },
+  {
+    id: 'rhonda-glez',
+    name: 'Rhonda Glez',
+    initials: 'RG',
+    role: 'Marketing Director',
+    avatar: colors.forest,
+    photo: require('../../assets/images/rhonda.jpg'),
+    bio: 'Tijuana-based artist moving between R&B, hip-hop, techno and more. Designed the program for the first Nexus Film Festival.',
+    link: { label: 'Linktree', url: 'https://linktr.ee/RhondaGlez' },
+  },
+  { id: 'melina-martinez', name: 'Melina Martinez', initials: 'MM', role: 'Event Coordinator', avatar: colors.olive },
+  { id: 'kendra-mcfadden', name: 'Kendra McFadden', initials: 'KM', role: 'Producer', avatar: colors.ink },
+  { id: 'zavier-gordon', name: 'Zavier Gordon', initials: 'ZG', role: 'Cinematographer', avatar: colors.forest },
+];
+
+export type TeamMember = { person: string; part: string };
+
+// Who worked on each of Nicole's events, keyed by work id. Parts follow each person's
+// Nexus title; adjust per event as needed.
+export const teams: Record<string, TeamMember[]> = {
+  nff1: [
+    { person: 'nicole', part: 'Founder and host' },
+    { person: 'jenny-xu', part: 'Co-Founder' },
+    { person: 'rhonda-glez', part: 'Program design' },
+    { person: 'melina-martinez', part: 'Event coordination' },
+    { person: 'kendra-mcfadden', part: 'Production' },
+    { person: 'zavier-gordon', part: 'Cinematography' },
+  ],
+  curtain: [
+    { person: 'nicole', part: 'Creative direction' },
+    { person: 'jenny-xu', part: 'Co-Founder' },
+    { person: 'robert-gomez', part: 'Campus and community' },
+    { person: 'melina-martinez', part: 'Event coordination' },
+    { person: 'kendra-mcfadden', part: 'Production' },
+  ],
+  'latin-jazz': [
+    { person: 'nicole', part: 'Creative direction' },
+    { person: 'robert-gomez', part: 'Community relations' },
+    { person: 'melina-martinez', part: 'Event coordination' },
+  ],
+  'nex-up': [
+    { person: 'nicole', part: 'Curation' },
+    { person: 'rhonda-glez', part: 'Marketing' },
+    { person: 'melina-martinez', part: 'Event coordination' },
+  ],
+  'festival-2027': [
+    { person: 'nicole', part: 'Creative direction' },
+    { person: 'jenny-xu', part: 'Co-Founder' },
+    { person: 'yaxi-zhang', part: 'Finance and sponsorships' },
+    { person: 'rhonda-glez', part: 'Marketing' },
+    { person: 'melina-martinez', part: 'Event coordination' },
+  ],
+};
+
+export const personById = (id: string) => people.find((p) => p.id === id);
+
+/** Every event a person worked on, for their profile. */
+export const workFor = (personId: string) =>
+  Object.entries(teams)
+    .filter(([, members]) => members.some((m) => m.person === personId))
+    .map(([workId, members]) => ({ workId, part: members.find((m) => m.person === personId)!.part }));
+
 export const allWork = workModules.flatMap((m) => m.items.map((item) => ({ ...item, module: m.title })));
 
 export type ProfilePost = {
@@ -482,7 +575,7 @@ export const profilePosts: ProfilePost[] = [
     id: 'p1',
     time: '3d',
     kind: 'New work',
-    module: 'Events I organize',
+    module: 'My events',
     workId: 'nff1',
     text: 'We sold out the Giant Dome. 248 seats, 11 short films, four awards. Thank you to every filmmaker who trusted us with their work.',
     art: { bg: colors.forest, fg: colors.lime, height: 170, label: 'Giant Dome', image: require('../../assets/images/dome.jpg') },

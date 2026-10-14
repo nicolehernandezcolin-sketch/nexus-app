@@ -47,20 +47,26 @@ export function Screen({
   nav,
   footer,
   contentStyle,
+  overlay,
 }: {
   header?: ReactNode;
   children: ReactNode;
   nav?: boolean;
   footer?: ReactNode;
   contentStyle?: ScrollViewProps['contentContainerStyle'];
+  /** Floats above the scrolling content, e.g. a post button. */
+  overlay?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {header}
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={contentStyle} keyboardShouldPersistTaps="handled">
-        {children}
-      </ScrollView>
+      <View style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={contentStyle} keyboardShouldPersistTaps="handled">
+          {children}
+        </ScrollView>
+        {overlay}
+      </View>
       {footer}
       {nav ? <BottomNav /> : null}
     </View>
@@ -148,7 +154,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 104,
+    bottom: 150,
     backgroundColor: colors.ink,
     borderRadius: 16,
     paddingVertical: 14,

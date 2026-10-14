@@ -4,12 +4,22 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, LayoutChangeEvent, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { events, profile, profileKindColors, ProfilePost, profilePosts, WorkModule, workModules } from '../data/content';
 import { saleLabel } from '../data/fees';
-import { ProfileTab, useDemo } from '../state/DemoState';
+import { ProfileTab, useDemo, UserPost } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 import { Icon, IconName } from './Icon';
+import { TeamStack } from './Team';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, Tap, text } from './ui';
 
 const nativeDriver = Platform.OS !== 'web';
+
+/** Shape a post written in the demo like the profile's own posts. */
+export const asProfilePost = (p: UserPost): ProfilePost => ({
+  id: p.id,
+  time: 'Just now',
+  kind: p.kind,
+  text: p.text,
+  art: p.image ? { bg: colors.stone, fg: colors.forest, height: 220, label: 'Your photo', image: { uri: p.image } } : undefined,
+});
 
 const eventCta = (id: string) => {
   const e = events.find((x) => x.id === id);
@@ -28,7 +38,7 @@ export function ProfileTabs() {
 
   const tabs: { id: ProfileTab; label: string; icon: IconName }[] = [
     { id: 'work', label: 'Work', icon: 'grid' },
-    { id: 'timeline', label: 'Timeline', icon: 'timeline' },
+    { id: 'posts', label: 'Posts', icon: 'chat' },
   ];
   const half = (width - 8) / 2;
 
@@ -157,20 +167,22 @@ function ModuleCard({ module: m, organizing, index, count }: { module: WorkModul
       {!collapsed && !organizing ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moduleItems}>
           {m.items.map((item) => (
-            <Tap
-              key={item.id}
-              accessibilityRole="button"
-              onPress={() => router.push({ pathname: '/work/[id]', params: { id: item.id } })}
-              style={styles.workItem}
-            >
-              <ArtBlock art={item.art} radius={14} />
-              <Text style={[text.strong, { fontSize: 13.5 }]} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={[text.small, { fontSize: 12 }]} numberOfLines={1}>
-                {item.detail}
-              </Text>
-            </Tap>
+            <View key={item.id} style={styles.workItem}>
+              <Tap
+                accessibilityRole="button"
+                onPress={() => router.push({ pathname: '/work/[id]', params: { id: item.id } })}
+                style={{ gap: 6 }}
+              >
+                <ArtBlock art={item.art} radius={14} />
+                <Text style={[text.strong, { fontSize: 13.5 }]} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={[text.small, { fontSize: 12 }]} numberOfLines={1}>
+                  {item.detail}
+                </Text>
+              </Tap>
+              <TeamStack workId={item.id} />
+            </View>
           ))}
         </ScrollView>
       ) : null}
@@ -195,10 +207,10 @@ function IconButton({ icon, label, onPress, disabled, active }: { icon: IconName
 
 /* ---------- Personal timeline ---------- */
 
-export function PersonalTimeline() {
-  const { pinnedPost } = useDemo();
-  // Pinned post first, then everything else newest first.
-  const posts = [...profilePosts].sort((a, b) => Number(b.id === pinnedPost) - Number(a.id === pinnedPost));
+export function ProfilePosts() {
+  const { pinnedPost, userPosts } = useDemo();
+  // New posts from this session first, then the pinned post, then everything else newest first.
+  const posts = [...userPosts.map(asProfilePost), ...profilePosts].sort((a, b) => Number(b.id === pinnedPost) - Number(a.id === pinnedPost));
 
   return (
     <View style={{ gap: 12 }}>
@@ -243,7 +255,7 @@ function OwnPost({ post: p, pinned }: { post: ProfilePost; pinned: boolean }) {
           icon={<Icon name="pin" size={16} color={colors.forest} />}
           style={{ height: 38 }}
           onPress={() => {
-            if (!pinned) showToast('Pinned to the **top** of your timeline.');
+            if (!pinned) showToast('Pinned to the **top** of your posts.');
             togglePinned(p.id);
           }}
         />
@@ -281,7 +293,7 @@ const styles = StyleSheet.create({
   moduleTitleBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
   moduleTitle: { fontFamily: fonts.display700, fontSize: 16, color: colors.ink },
   moduleItems: { paddingHorizontal: 16, gap: 10 },
-  workItem: { width: 148, gap: 6 },
+  workItem: { width: 148, gap: 8 },
   iconBtn: {
     width: 40,
     height: 40,

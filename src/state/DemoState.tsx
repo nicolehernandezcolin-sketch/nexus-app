@@ -1,9 +1,14 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { OptionId, profile, TicketTier, workModules } from '../data/content';
+import { OptionId, PostKind, profile, TicketTier, workModules } from '../data/content';
+
+/** A post written in the demo, shown at the top of the timeline and on the profile. */
+export type UserPost = { id: string; kind: PostKind; text: string; image?: string };
+
+export type HeaderStyle = { cover: string; pattern: 'none' | 'waves' | 'grid' | 'dots' };
 
 export type Ticket = { id: string; eventId: string; tier: string; price: number; holder: string; seq: number };
 
-export type ProfileTab = 'work' | 'timeline';
+export type ProfileTab = 'work' | 'posts';
 
 type DemoState = {
   roles: Record<string, boolean>;
@@ -17,6 +22,10 @@ type DemoState = {
   hiddenModules: Record<string, boolean>;
   collapsedModules: Record<string, boolean>;
   pinnedPost: string | null;
+  userPosts: UserPost[];
+  header: HeaderStyle;
+  addPost: (post: Omit<UserPost, 'id'>) => void;
+  setHeader: (change: Partial<HeaderStyle>) => void;
   setProfileTab: (tab: ProfileTab) => void;
   moveModule: (id: string, by: -1 | 1) => void;
   toggleModuleHidden: (id: string) => void;
@@ -50,6 +59,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [hiddenModules, setHiddenModules] = useState<Record<string, boolean>>({});
   const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({});
   const [pinnedPost, setPinnedPost] = useState<string | null>(null);
+  const [userPosts, setUserPosts] = useState<UserPost[]>([]);
+  const [header, setHeaderState] = useState<HeaderStyle>({ cover: 'dome', pattern: 'none' });
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const showToast = useCallback((message: string) => {
@@ -71,6 +82,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       hiddenModules,
       collapsedModules,
       pinnedPost,
+      userPosts,
+      header,
+      addPost: (post) => setUserPosts((list) => [{ ...post, id: `u${list.length + 1}` }, ...list]),
+      setHeader: (change) => setHeaderState((h) => ({ ...h, ...change })),
       setProfileTab,
       moveModule: (id, by) =>
         setModuleOrder((order) => {
@@ -103,7 +118,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       enterDrawing: (id) => setDrawings((s) => ({ ...s, [id]: true })),
       showToast,
     }),
-    [roles, options, saved, tickets, drawings, toast, profileTab, moduleOrder, hiddenModules, collapsedModules, pinnedPost, showToast],
+    [roles, options, saved, tickets, drawings, toast, profileTab, moduleOrder, hiddenModules, collapsedModules, pinnedPost, userPosts, header, showToast],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

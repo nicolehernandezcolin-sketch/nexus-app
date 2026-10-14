@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
-import { PersonalTimeline, ProfileTabs, WorkModules } from '../components/ProfileSections';
+import { CoverBanner, CustomizePanel } from '../components/ProfileHeader';
+import { ProfilePosts, ProfileTabs, WorkModules } from '../components/ProfileSections';
 import { Avatar, Button, Card, Pill, SectionTitle, Tap, text } from '../components/ui';
 import { events, profile } from '../data/content';
 import { saleLabel } from '../data/fees';
@@ -11,13 +13,23 @@ import { colors, fonts } from '../theme';
 
 export default function Profile() {
   const { showToast, profileTab } = useDemo();
+  const [customizing, setCustomizing] = useState(false);
   const hosting = profile.hosting.map((id) => events.find((e) => e.id === id)).filter((e) => !!e);
 
   return (
     <Screen nav>
-      <View style={styles.hero}>
-        <View style={styles.row}>
-          <Text style={[text.eyebrow, { color: colors.lime }]}>NEXUS</Text>
+      <View>
+        <CoverBanner />
+        <View style={styles.coverActions}>
+          <Tap
+            accessibilityRole="button"
+            accessibilityState={{ expanded: customizing }}
+            onPress={() => setCustomizing(!customizing)}
+            style={styles.coverBtn}
+          >
+            <Icon name="pencil" size={16} color={colors.lime} />
+            <Text style={styles.coverBtnText}>Customize</Text>
+          </Tap>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Privacy and settings"
@@ -27,15 +39,24 @@ export default function Profile() {
             <Icon name="gear" size={20} color={colors.lime} />
           </Pressable>
         </View>
-        <View style={[styles.row, { justifyContent: 'flex-start', gap: 14 }]}>
-          <Avatar initials={profile.initials} photo={profile.photo} size={84} bg={colors.lime} fg={colors.ink} ring={colors.lime} />
-          <View style={{ flex: 1, gap: 3 }}>
-            <Text style={styles.name} accessibilityRole="header">
-              {profile.name}
-            </Text>
-            <Text style={styles.tagline}>{profile.tagline}</Text>
-            <Text style={styles.tagline}>{profile.location}</Text>
-          </View>
+      </View>
+      {customizing ? (
+        <View style={styles.customize}>
+          <CustomizePanel onDone={() => setCustomizing(false)} />
+        </View>
+      ) : null}
+      <View style={styles.hero}>
+        <View style={[styles.row, { justifyContent: 'flex-start', gap: 14, alignItems: 'flex-end', marginTop: customizing ? 8 : -50 }]}>
+          <Avatar initials={profile.initials} photo={profile.photo} size={92} bg={colors.lime} fg={colors.ink} ring={colors.forest} />
+          <Text style={[text.eyebrow, { color: colors.lime, marginBottom: 6 }]}>NEXUS</Text>
+        </View>
+        <View style={{ gap: 3 }}>
+          <Text style={styles.name} accessibilityRole="header">
+            {profile.name}
+          </Text>
+          <Text style={styles.tagline}>
+            {profile.tagline} · {profile.location}
+          </Text>
         </View>
         <View style={styles.role}>
           <Icon name="star" size={14} color={colors.ink} strokeWidth={2.2} />
@@ -104,7 +125,7 @@ export default function Profile() {
 
         <View style={{ gap: 14 }}>
           <ProfileTabs />
-          {profileTab === 'work' ? <WorkModules /> : <PersonalTimeline />}
+          {profileTab === 'work' ? <WorkModules /> : <ProfilePosts />}
         </View>
 
         {profileTab === 'work' ? (
@@ -130,9 +151,21 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: colors.forest, padding: 20, paddingTop: 22, gap: 14 },
+  hero: { backgroundColor: colors.forest, padding: 20, paddingTop: 0, gap: 14 },
+  customize: { backgroundColor: colors.forest, paddingHorizontal: 16, paddingTop: 16 },
+  coverActions: { position: 'absolute', top: 14, right: 14, left: 14, flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+  coverBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    backgroundColor: 'rgba(31,32,28,0.72)',
+  },
+  coverBtnText: { fontFamily: fonts.body600, fontSize: 13, color: colors.lime },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  gear: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.forest2, alignItems: 'center', justifyContent: 'center' },
+  gear: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(31,32,28,0.72)', alignItems: 'center', justifyContent: 'center' },
   name: { fontFamily: fonts.display800, fontSize: 22, lineHeight: 25, color: colors.cream },
   tagline: { fontFamily: fonts.body400, fontSize: 13, color: colors.creamMuted },
   role: {

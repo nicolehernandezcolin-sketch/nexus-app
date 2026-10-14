@@ -27,7 +27,12 @@ export type IconName =
   | 'send'
   | 'tag'
   | 'link'
-  | 'users';
+  | 'users'
+  | 'plus'
+  | 'image'
+  | 'close'
+  | 'sparkle'
+  | 'pencil';
 
 type Props = { name: IconName; size?: number; color?: string; strokeWidth?: number };
 
@@ -144,6 +149,22 @@ function paths(name: IconName, p: object) {
           <Path {...p} d="M2 21c1-4 4-6 7-6s6 2 7 6M16 4a4 4 0 0 1 0 8M18 15c2 1 3.5 3 4 6" />
         </>
       );
+    case 'plus':
+      return <Path {...p} d="M12 5v14M5 12h14" />;
+    case 'image':
+      return (
+        <>
+          <Rect {...p} x="3" y="4" width="18" height="16" rx="3" />
+          <Circle {...p} cx="9" cy="10" r="2" />
+          <Path {...p} d="M21 16l-5-5-9 9" />
+        </>
+      );
+    case 'close':
+      return <Path {...p} d="M6 6l12 12M18 6L6 18" />;
+    case 'sparkle':
+      return <Path {...p} d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />;
+    case 'pencil':
+      return <Path {...p} d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" />;
     case 'star':
       return <Path {...p} d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z" />;
   }

@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Image, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../../components/Chrome';
+import { TeamList } from '../../components/Team';
 import { Icon } from '../../components/Icon';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, SectionTitle, Tap, text } from '../../components/ui';
 import { allWork, events, profile, profilePosts } from '../../data/content';
@@ -62,6 +63,8 @@ export default function WorkScreen() {
           ))}
         </Card>
       ) : null}
+
+      <TeamList workId={work.id} />
 
       {work.gallery ? (
         <View style={{ gap: 10 }}>

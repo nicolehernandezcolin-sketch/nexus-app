@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../../components/Chrome';
+import { TeamList } from '../../components/Team';
 import { Icon, IconName } from '../../components/Icon';
 import { FairPlay, PriceBreakdown, QuantityStepper } from '../../components/Tickets';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, SectionTitle, Tap, text } from '../../components/ui';
@@ -52,6 +53,8 @@ function EventDetail({ event: e }: { event: NexusEvent }) {
         </View>
         <Text style={text.small}>{e.friendsText}</Text>
       </View>
+
+      <TeamList workId={e.id} title="Who’s putting it on" />
 
       {e.sale.kind === 'tickets' ? <TicketPicker event={e} tiers={e.sale.tiers} /> : null}
       {e.sale.kind === 'free' ? <FreeRsvp event={e} note={e.sale.note} /> : null}
