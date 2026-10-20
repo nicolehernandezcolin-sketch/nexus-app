@@ -34,7 +34,9 @@ Costs this doesn't cover yet:
 
 ## 2. Selling tickets for real
 
-The live demo runs on GitHub Pages, which only serves static files. Real payments need a server. The suggested setup:
+**Built:** Stripe Checkout through two Supabase server functions, with server-side pricing, the 4-per-person limit enforced in the database, named tickets issued only after Stripe confirms payment, and refunds. Setup steps are in [BACKEND.md](BACKEND.md#set-up-stripe-for-paid-tickets). Nexus sells as the single merchant for now.
+
+**Next**, so other organizers get paid directly:
 
 1. **Stripe Connect (Express accounts).** Each organizer, starting with Nexus, onboards once. Money goes straight to them, and Nexus takes its fee through `application_fee_amount`. Stripe handles payouts, tax forms (1099-K) and KYC.
 2. **A small backend.** Supabase (Postgres, auth and edge functions) or Expo Router API routes deployed with EAS Hosting. It creates PaymentIntents, stores orders and tickets, and receives Stripe webhooks.
@@ -75,8 +77,9 @@ There's no single fix. Each layer makes the next attack more expensive until res
 | Protection | In the demo | Needs |
 | --- | --- | --- |
 | Fee breakdown and Eventbrite comparison | Working | – |
-| 4-per-person limit | Enforced in the app | Server enforcement across card, phone and device |
+| Real payments | Stripe Checkout, live mode | – |
+| 4-per-person limit | Enforced on the server and in the database, per account | Also per card, phone and device |
 | Fair-access check at checkout | Animated steps | App Attest, Play Integrity, phone lookup |
 | Fair drawing | Enter and see status | Drawing service and notifications |
-| Live rotating code | Redraws every 15 s | Server-signed tokens and a door scanner app |
+| Live rotating code | Redraws every 15 s from a per-ticket secret only the owner can read | Server-signed tokens and a door scanner app |
 | Transfer and face-value resale | Messages explain the rules | Transfer and waitlist backend |

@@ -84,7 +84,7 @@ function EventDetail({ event: e, onChanged }: { event: NexusEvent; onChanged?: (
 
       <FairPlay />
       <Text style={[text.small, { textAlign: 'center' }]}>
-        {liveRow ? 'Ticket payments open soon. Free RSVPs and drawings work now.' : 'Demo prices. No card is charged.'}
+        {liveRow ? 'Payments are processed by Stripe. Nexus never sees your card.' : 'Demo prices. No card is charged.'}
       </Text>
     </Screen>
   );
@@ -104,7 +104,8 @@ function TicketPicker({ event: e, tiers }: { event: NexusEvent; tiers: TicketTie
   const [tierId, setTierId] = useState(tiers[0].id);
   const [quantity, setQuantity] = useState(1);
   const tier = tiers.find((t) => t.id === tierId) ?? tiers[0];
-  const owned = tickets.filter((t) => t.eventId === e.id).length;
+  const liveRow = (e as Partial<LiveEvent>).live;
+  const owned = liveRow ? liveRow.ticketsHeld : tickets.filter((t) => t.eventId === e.id).length;
   const remaining = TICKET_LIMIT - owned;
 
   return (

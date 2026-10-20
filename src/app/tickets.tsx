@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
@@ -8,10 +8,18 @@ import { FairPlay, LiveCode } from '../components/Tickets';
 import { Button, Card, Rise, Tap, text } from '../components/ui';
 import { events, profile } from '../data/content';
 import { money } from '../data/fees';
+import { fetchMyTickets, orderStatus, useLoad } from '../lib/api';
+import { useAuth } from '../lib/auth';
+import { toNexusEvent } from '../lib/mappers';
 import { Ticket, useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Tickets() {
+  const { live } = useAuth();
+  return live ? <LiveTickets /> : <DemoTickets />;
+}
+
+function DemoTickets() {
   const { tickets, drawings } = useDemo();
   const insets = useSafeAreaInsets();
   // Start with the buyer's own ticket from their latest order open.
@@ -58,20 +66,63 @@ function TicketCard({ ticket: t, open, onToggle }: { ticket: Ticket; open: boole
   const { showToast } = useDemo();
   const event = events.find((e) => e.id === t.eventId);
   if (!event) return null;
+  return (
+    <TicketView
+      month={event.month}
+      day={event.day}
+      title={event.title}
+      line={`${t.tier} · ${money(t.price)}`}
+      holder={t.holder}
+      codeSeed={t.id}
+      open={open}
+      onToggle={onToggle}
+      onTransfer={() => showToast('Transfers are **free** and go to a verified Nexus member.')}
+      onResell={() =>
+        showToast(
+          t.price > 0
+            ? `Resale is capped at what you paid: **${money(t.price)}**. The next fan on the waitlist gets it.`
+            : 'Free RSVPs can’t be sold. Release it so someone else can come.',
+        )
+      }
+    />
+  );
+}
 
+/** A ticket: stub with the event, and when open, the live entry code and actions. */
+function TicketView({
+  month,
+  day,
+  title,
+  line,
+  holder,
+  codeSeed,
+  open,
+  onToggle,
+  onTransfer,
+  onResell,
+}: {
+  month: string;
+  day: string;
+  title: string;
+  line: string;
+  holder: string;
+  codeSeed: string;
+  open: boolean;
+  onToggle: () => void;
+  onTransfer: () => void;
+  onResell: () => void;
+}) {
   return (
     <View style={styles.ticket}>
       <Tap accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={onToggle} style={styles.ticketTop}>
         <View style={styles.date}>
-          <Text style={styles.month}>{event.month}</Text>
-          <Text style={styles.day}>{event.day}</Text>
+          <Text style={styles.month}>{month}</Text>
+          <Text style={styles.day}>{day}</Text>
         </View>
         <View style={{ flex: 1, gap: 3 }}>
-          <Text style={styles.ticketTitle}>{event.title}</Text>
-          <Text style={styles.ticketMeta}>
-            {t.tier} · {money(t.price)}
-          </Text>
-          <Text style={styles.ticketMeta}>{t.holder}</Text>
+          <Text style={styles.ticketTitle}>{title}</Text>
+          <Text style={styles.ticketMeta}>{line}</Text>
+          <Text style={styles.ticketMeta}>{holder}</Text>
         </View>
         <Icon name={open ? 'chevron' : 'ticket'} size={20} color={colors.lime} />
       </Tap>
@@ -86,33 +137,114 @@ function TicketCard({ ticket: t, open, onToggle }: { ticket: Ticket; open: boole
       {open ? (
         <View style={styles.ticketBody}>
           <View style={styles.codePanel}>
-            <LiveCode ticketId={t.id} />
+            <LiveCode ticketId={codeSeed} />
           </View>
           <View style={styles.actions}>
-            <Button
-              variant="lime"
-              label="Transfer"
-              icon={<Icon name="send" size={16} />}
-              style={{ flex: 1, height: 44 }}
-              onPress={() => showToast('Transfers are **free** and go to a verified Nexus member.')}
-            />
+            <Button variant="lime" label="Transfer" icon={<Icon name="send" size={16} />} style={{ flex: 1, height: 44 }} onPress={onTransfer} />
             <Button
               variant="outlineDark"
               label="Resell"
               icon={<Icon name="tag" size={16} color={colors.cream} />}
               style={{ flex: 1, height: 44 }}
-              onPress={() =>
-                showToast(
-                  t.price > 0
-                    ? `Resale is capped at what you paid: **${money(t.price)}**. The next fan on the waitlist gets it.`
-                    : 'Free RSVPs can’t be sold. Release it so someone else can come.',
-                )
-              }
+              onPress={onResell}
             />
           </View>
         </View>
       ) : null}
     </View>
+  );
+}
+
+/** Real tickets from the database, and confirmation after returning from Stripe. */
+function LiveTickets() {
+  const { order, cancelled } = useLocalSearchParams<{ order?: string; cancelled?: string }>();
+  const { showToast } = useDemo();
+  const insets = useSafeAreaInsets();
+  const loaded = useLoad(fetchMyTickets, []);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<'waiting' | 'expired' | null>(order && !cancelled ? 'waiting' : null);
+
+  useEffect(() => {
+    if (cancelled) showToast('Payment cancelled. **Nothing was charged.**');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cancelled]);
+
+  // Stripe confirms the payment to our server a moment after you return; check until the tickets land.
+  useEffect(() => {
+    if (!order || cancelled) return;
+    let tries = 0;
+    const timer = setInterval(async () => {
+      tries++;
+      const status = await orderStatus(order).catch(() => null);
+      if (status === 'paid') {
+        clearInterval(timer);
+        setConfirming(null);
+        await loaded.reload();
+        showToast('You’re in. **Your tickets are here.**');
+      } else if (status === 'expired' || tries > 30) {
+        clearInterval(timer);
+        setConfirming('expired');
+      }
+    }, 2000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order, cancelled]);
+
+  const rows = loaded.data ?? [];
+  const first = rows[0]?.ticket.id ?? null;
+
+  return (
+    <Screen header={<BackHeader label="Events" fallback="/events" />} contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}>
+      <Text style={styles.title} accessibilityRole="header">
+        My tickets
+      </Text>
+
+      {confirming === 'waiting' ? (
+        <Card style={styles.drawing}>
+          <ActivityIndicator color={colors.forest} />
+          <Text style={[text.strong, { flex: 1, fontSize: 14 }]}>Confirming your payment with Stripe…</Text>
+        </Card>
+      ) : null}
+      {confirming === 'expired' ? (
+        <Card style={styles.drawing}>
+          <Icon name="clock" size={18} color={colors.forest} />
+          <Text style={[text.sub, { flex: 1 }]}>We haven’t heard from Stripe yet. If you were charged, your tickets will appear here shortly.</Text>
+        </Card>
+      ) : null}
+
+      {loaded.loading && !loaded.data ? <ActivityIndicator color={colors.forest} /> : null}
+      {loaded.data && rows.length === 0 && !confirming ? (
+        <Card style={styles.empty}>
+          <Icon name="ticket" size={32} color={colors.olive} />
+          <Text style={[text.strong, { textAlign: 'center' }]}>No tickets yet</Text>
+          <Text style={[text.sub, { textAlign: 'center' }]}>Tickets you buy land here, ready to scan at the door.</Text>
+          <Button label="Browse events" onPress={() => router.replace('/events')} />
+        </Card>
+      ) : null}
+
+      {rows.map(({ ticket: t, event }, i) => {
+        const e = event ? toNexusEvent(event) : null;
+        const isOpen = (openId ?? first) === t.id;
+        return (
+          <Rise key={t.id} delay={i * 60}>
+            <TicketView
+              month={e?.month ?? ''}
+              day={e?.day ?? ''}
+              title={e?.title ?? 'Event'}
+              line={`${t.tier_name} · ${money(t.price_cents / 100)}${t.status !== 'valid' ? ` · ${t.status}` : ''}`}
+              holder={t.holder_name}
+              codeSeed={t.code_secret}
+              open={isOpen}
+              onToggle={() => setOpenId(isOpen ? '' : t.id)}
+              onTransfer={() => showToast('Free transfers to another member are coming next.')}
+              onResell={() => showToast(`Face-value resale (up to **${money(t.price_cents / 100)}**) is coming next.`)}
+            />
+          </Rise>
+        );
+      })}
+
+      <FairPlay />
+    </Screen>
   );
 }
 

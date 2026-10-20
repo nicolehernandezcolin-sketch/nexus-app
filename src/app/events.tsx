@@ -68,7 +68,7 @@ function EventCard({ event: e }: { event: NexusEvent }) {
   const subtle = dark ? colors.creamMuted : colors.muted;
 
   const liveRow = (e as Partial<LiveEvent>).live;
-  const mine = liveRow ? (liveRow.mine ? 1 : 0) : tickets.filter((t) => t.eventId === e.id).length;
+  const mine = liveRow ? liveRow.ticketsHeld || (liveRow.mine ? 1 : 0) : tickets.filter((t) => t.eventId === e.id).length;
   const entered = liveRow ? liveRow.entered : drawings[e.id];
   const status = mine ? (e.sale.kind === 'free' ? 'Going' : `${mine} ticket${mine > 1 ? 's' : ''}`) : entered ? 'Entered' : null;
   const open = () => router.push({ pathname: '/event/[id]', params: { id: e.id } });

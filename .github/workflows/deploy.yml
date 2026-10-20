@@ -25,6 +25,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: npx tsx scripts/check-pricing.ts
       - run: npx expo export -p web
         env:
           # Set these as repository variables to run the real app; leave them unset for the demo.

@@ -20,7 +20,8 @@ Nexus runs in two modes from the same code:
 | Events, free RSVPs, fair drawing entries, event teams | Yes |
 | Private groups: invite-only, posts and files for members only | Yes |
 | Private messages, with photos and live updates | Yes |
-| Paid tickets | Not yet: checkout says payments open soon. See [TICKETING.md](TICKETING.md) |
+| Paid tickets through Stripe Checkout, named tickets, refunds | Yes, once Stripe is set up (below) |
+| Ticket transfers and face-value resale | Not yet: the buttons say coming next |
 | Adding work items and events from the app | Not yet: add them in Supabase for now |
 
 ## Set up Supabase (about 10 minutes)
@@ -29,12 +30,57 @@ Nexus runs in two modes from the same code:
 2. In the project, open **SQL Editor** and run these files from this repo, in order:
    1. `supabase/migrations/0001_init.sql`
    2. `supabase/migrations/0002_private.sql`
+   3. `supabase/migrations/0003_tickets.sql`
 3. Open **Project Settings → API** and copy the **Project URL** and the **publishable key** (it starts with `sb_publishable_`; older projects call it the `anon` key). The publishable key is meant to be in the app; the security rules protect the data. Never put the `secret` / `service_role` key in the app.
 4. Copy `.env.example` to `.env.local` and paste both values in.
 5. Run the app (`npm start`), create your account, and finish setup.
 6. Back in the SQL Editor, run `supabase/seed.sql` once. It loads your events and work into the first account created, which is yours.
 
 Optional for testing: **Authentication → Providers → Email** has "Confirm email" on by default, so new accounts must click a link before signing in. Leave it on for real launch.
+
+## Set up Stripe for paid tickets
+
+Payments use Stripe's hosted Checkout page, so card details go to Stripe and never touch Nexus. Two server functions in `supabase/functions` do the work:
+
+- `create-checkout` works out the price, the Nexus fee and the 4-per-person limit from the database (never from the app), records a pending order and returns the Stripe page.
+- `stripe-webhook` hears from Stripe when the payment succeeds, then issues one named ticket per seat. It also handles expired checkouts and full refunds.
+
+Members can read their own orders and tickets but can't create or change them. The database also refuses any order that would take someone past 4 tickets for an event.
+
+**Steps (start in test mode, no real money):**
+
+1. Create a Stripe account at [stripe.com](https://stripe.com). Leave it in **Test mode**.
+2. Deploy the functions with the Supabase CLI, from this folder:
+
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref YOUR_PROJECT_REF
+   npx supabase functions deploy create-checkout
+   npx supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+
+   `--no-verify-jwt` is only for the webhook: Stripe signs its calls instead of signing in.
+3. In Stripe, open **Developers → API keys** and copy the **Secret key** (`sk_test_…`). Set it, plus where buyers return after paying:
+
+   ```bash
+   npx supabase secrets set STRIPE_SECRET_KEY=sk_test_... ALLOWED_RETURN_URLS=https://nicolehernandezcolin-sketch.github.io/nexus-app/tickets,nexus://tickets,http://localhost:8081/tickets
+   ```
+
+4. In Stripe, open **Developers → Webhooks → Add endpoint**:
+   - URL: `https://YOUR_PROJECT_REF.supabase.co/functions/v1/stripe-webhook`
+   - Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`, `charge.refunded`
+   - Copy the endpoint's **Signing secret** (`whsec_…`) and set it:
+
+   ```bash
+   npx supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+   ```
+
+5. Buy a ticket in the app and pay with Stripe's test card `4242 4242 4242 4242`, any future date, any CVC. You land back on My tickets, it says "Confirming your payment", and your named tickets appear.
+6. To go live: activate your Stripe account (business details and bank account), switch to live keys, add a live webhook endpoint, and set the live secrets the same way.
+
+Keep the secret key and webhook secret only in Supabase secrets. They must never go in the app, `.env.local` or GitHub.
+
+**Money:** buyers pay the ticket price plus the Nexus fee (3% + $0.99 per ticket). Stripe takes its processing fee (2.9% + $0.30 per order on US cards) from what Nexus receives. Nexus keeps about $0.66 per ticket. Payouts go to Nexus's bank account. Paying other organizers directly is the Stripe Connect step in [TICKETING.md](TICKETING.md).
 
 ## Put the live app on the web link
 

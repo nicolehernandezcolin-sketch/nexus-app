@@ -25,7 +25,7 @@ Built with React Native and [Expo](https://expo.dev), so the same code runs on i
 
 ## Demo and live modes
 
-With no backend settings the app runs as this demo, with sample content. Connect a Supabase project and it becomes the real app: accounts, saved profiles and posts, follows, events, private groups and messages. Setup steps, what works live, and how privacy and encryption are handled are in [`docs/BACKEND.md`](docs/BACKEND.md).
+With no backend settings the app runs as this demo, with sample content. Connect a Supabase project and it becomes the real app: accounts, saved profiles and posts, follows, events, private groups, messages, and paid tickets through Stripe. Setup steps, what works live, and how privacy and encryption are handled are in [`docs/BACKEND.md`](docs/BACKEND.md).
 
 ## Run it yourself
 
@@ -40,7 +40,16 @@ Then press `w` to open it in a browser, or scan the QR code with the **Expo Go**
 
 ## Ticketing
 
-The fee, the per-person limit and the code refresh time live in [`src/data/fees.ts`](src/data/fees.ts). How real payments and anti-scalping protections would work is written up in [`docs/TICKETING.md`](docs/TICKETING.md). Ticket prices in the demo are samples and nothing is charged.
+The fee, the per-person limit and the code refresh time live in [`src/data/fees.ts`](src/data/fees.ts). How real payments and anti-scalping protections would work is written up in [`docs/TICKETING.md`](docs/TICKETING.md). Ticket prices in the demo are samples and nothing is charged. With Supabase and Stripe connected, checkout takes real payments; see [`docs/BACKEND.md`](docs/BACKEND.md).
+
+## Checks
+
+```bash
+npx tsc --noEmit
+npx tsx scripts/check-pricing.ts
+```
+
+The second confirms the price the app shows matches what the server charges, for every price up to $500.
 
 ## Editing content
 

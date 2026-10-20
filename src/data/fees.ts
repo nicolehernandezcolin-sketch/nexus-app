@@ -19,8 +19,10 @@ export const CODE_REFRESH_SECONDS = 15;
 
 const cents = (n: number) => Math.round(n * 100) / 100;
 
+/** Worked out in whole cents, the same way the server charges (supabase/functions/_shared/pricing.ts). */
 export function feePerTicket(price: number, fee = NEXUS_FEE) {
-  return price <= 0 ? 0 : cents(price * fee.percent + fee.fixed);
+  if (price <= 0) return 0;
+  return Math.round(Math.round(price * 100) * fee.percent + fee.fixed * 100) / 100;
 }
 
 export function quote(price: number, quantity: number) {

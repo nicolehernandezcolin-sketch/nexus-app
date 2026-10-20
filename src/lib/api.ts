@@ -282,19 +282,21 @@ export async function fetchWork(ownerId: string) {
 
 /* ---------- Events ---------- */
 
-export type EventView = EventRow & { going: number; mine: boolean; entered: boolean; coverUrl?: string; hostName: string };
+export type EventView = EventRow & { going: number; mine: boolean; entered: boolean; coverUrl?: string; hostName: string; ticketsHeld: number };
 
 export async function fetchEvents(): Promise<EventView[]> {
   const uid = await myId();
   const events = check(await db().from('events').select('*').order('starts_on', { ascending: true, nullsFirst: false })) as EventRow[];
   const ids = events.map((e) => e.id);
   if (!ids.length) return [];
-  const [rsvps, entries, covers, hosts] = await Promise.all([
+  const [rsvps, entries, covers, hosts, held] = await Promise.all([
     db().from('rsvps').select('event_id, user_id').in('event_id', ids),
     db().from('drawing_entries').select('event_id').eq('user_id', uid),
     signedUrls('media', events.map((e) => e.cover_path)),
     getProfiles([...new Set(events.map((e) => e.host))]),
+    db().from('tickets').select('event_id').eq('owner', uid).eq('status', 'valid'),
   ]);
+  const heldRows = check(held) as { event_id: string }[];
   const r = check(rsvps) as { event_id: string; user_id: string }[];
   const entered = new Set((check(entries) as { event_id: string }[]).map((x) => x.event_id));
   return events.map((e) => ({
@@ -304,6 +306,7 @@ export async function fetchEvents(): Promise<EventView[]> {
     entered: entered.has(e.id),
     coverUrl: e.cover_path ? covers[e.cover_path] : undefined,
     hostName: hosts.find((h) => h.id === e.host)?.name || 'Nexus',
+    ticketsHeld: heldRows.filter((t) => t.event_id === e.id).length,
   }));
 }
 
@@ -438,4 +441,46 @@ export async function sendMessage(conversationId: string, body: string, imageUri
   const sender = await myId();
   const image_path = imageUri ? await uploadImage('private', imageUri, conversationId) : null;
   check(await db().from('messages').insert({ conversation_id: conversationId, sender, body, image_path }));
+}
+
+/* ---------- Paid tickets (Stripe) ---------- */
+
+export type TicketRow = {
+  id: string;
+  order_id: string;
+  event_id: string;
+  holder_name: string;
+  tier_name: string;
+  price_cents: number;
+  code_secret: string;
+  status: 'valid' | 'used' | 'refunded';
+  created_at: string;
+};
+
+/**
+ * Asks the server for a Stripe Checkout page. The server sets the price, the fee and the limit;
+ * the app only says what you want. Returns the page to open.
+ */
+export async function startCheckout(eventId: string, tierId: string, quantity: number, returnTo: string) {
+  const { data, error } = await db().functions.invoke('create-checkout', { body: { eventId, tierId, quantity, returnTo } });
+  if (error) {
+    // The function's own message (e.g. the ticket limit) is in the response body.
+    const body = await (error as { context?: Response }).context?.json?.().catch(() => null);
+    throw new Error(body?.error ?? error.message);
+  }
+  return data as { url: string; orderId: string };
+}
+
+export async function fetchMyTickets() {
+  const uid = await myId();
+  const tickets = check(
+    await db().from('tickets').select('*').eq('owner', uid).order('created_at', { ascending: false }),
+  ) as TicketRow[];
+  const events = await fetchEvents();
+  return tickets.map((t) => ({ ticket: t, event: events.find((e) => e.id === t.event_id) }));
+}
+
+export async function orderStatus(orderId: string) {
+  const row = check(await db().from('orders').select('status').eq('id', orderId).maybeSingle()) as { status: string } | null;
+  return row?.status ?? null;
 }
