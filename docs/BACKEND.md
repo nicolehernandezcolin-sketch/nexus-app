@@ -33,8 +33,12 @@ Nexus runs in two modes from the same code:
    3. `supabase/migrations/0003_tickets.sql`
 3. Open **Project Settings → API** and copy the **Project URL** and the **publishable key** (it starts with `sb_publishable_`; older projects call it the `anon` key). The publishable key is meant to be in the app; the security rules protect the data. Never put the `secret` / `service_role` key in the app.
 4. Copy `.env.example` to `.env.local` and paste both values in.
-5. Run the app (`npm start`), create your account, and finish setup.
-6. Back in the SQL Editor, run `supabase/seed.sql` once. It loads your events and work into the first account created, which is yours.
+5. Open **Authentication → URL Configuration**. Set **Site URL** to `https://nicolehernandezcolin-sketch.github.io/nexus-app/` and add these **Redirect URLs**, so confirmation emails link back to the app:
+   - `https://nicolehernandezcolin-sketch.github.io/nexus-app/**`
+   - `http://localhost:8081/**`
+   - `nexus://**`
+6. Run the app (`npm start`), create your account, and finish setup.
+7. Back in the SQL Editor, run `supabase/seed.sql` once. It loads your events and work into the first account created, which is yours.
 
 Optional for testing: **Authentication → Providers → Email** has "Confirm email" on by default, so new accounts must click a link before signing in. Leave it on for real launch.
 

@@ -2,6 +2,7 @@
 import { Session } from '@supabase/supabase-js';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { avatarUrls, getProfile, ProfileRow, updateMyProfile } from './api';
+import { appUrl } from './appUrl';
 import { supabase } from './supabase';
 
 type Auth = {
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       me,
       myAvatarUrl,
       signUp: async (name, email, password) => {
-        const { data, error } = await supabase!.auth.signUp({ email, password, options: { data: { name } } });
+        const { data, error } = await supabase!.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: appUrl('/') } });
         if (error) throw error;
         return { needsConfirm: !data.session };
       },
