@@ -44,20 +44,25 @@ export default function RootLayout() {
  * and set-up members past both. The demo has no gate.
  */
 function Gate() {
-  const { live, ready, session, me } = useAuth();
+  const { live, ready, session, me, recovering } = useAuth();
   const segments = useSegments();
   const at = segments[0] as string | undefined;
 
   useEffect(() => {
     if (!live || !ready) return;
-    if (!session) {
+    // A reset link signs you in just long enough to choose a new password; the screen explains expired links.
+    if (recovering) {
+      if (at !== 'reset-password') router.replace('/reset-password');
+    } else if (at === 'reset-password') {
+      return;
+    } else if (!session) {
       if (at !== 'auth') router.replace('/auth');
     } else if (me && !me.onboarded) {
       if (at !== undefined && at !== 'index') router.replace('/');
     } else if (me && (at === 'auth' || at === undefined || at === 'index')) {
       router.replace('/timeline');
     }
-  }, [live, ready, session, me, at]);
+  }, [live, ready, session, me, recovering, at]);
 
   return null;
 }

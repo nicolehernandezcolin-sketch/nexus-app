@@ -19,7 +19,8 @@ export const supabase: SupabaseClient | null =
           storage: onServer ? undefined : localStorage,
           autoRefreshToken: !onServer,
           persistSession: !onServer,
-          detectSessionInUrl: false,
+          // On the web, confirmation and password-reset links sign you in from the URL they open.
+          detectSessionInUrl: Platform.OS === 'web' && !onServer,
         },
       })
     : null;

@@ -42,6 +42,17 @@ Nexus runs in two modes from the same code:
 
 Optional for testing: **Authentication → Providers → Email** has "Confirm email" on by default, so new accounts must click a link before signing in. Leave it on for real launch.
 
+### Before inviting people: sending email
+
+Supabase's built-in email only reaches members of your Supabase team, 2 emails an hour. Everyone else gets "Email address not authorized" and never receives their confirmation or reset link. Connect a real sender first:
+
+1. Create a free account at [resend.com](https://resend.com) (3,000 emails a month free).
+2. In Resend, **Domains → Add domain** → `nexusglobal.info`, and add the DNS records it shows wherever the domain's DNS is managed. Wait for "Verified".
+3. In Resend, **Integrations → Supabase** connects it to the `nexus-app` project and fills in the SMTP settings. Or, by hand, in Supabase **Authentication → Emails → SMTP Settings**: host `smtp.resend.com`, port `465`, user `resend`, password = a Resend API key, sender `no-reply@nexusglobal.info`, name `Nexus`.
+4. In **Authentication → Rate Limits**, raise "emails sent per hour" from 30 to something like 100.
+
+The app handles the rest: confirmation links sign people straight in, "Forgot password?" sends a reset link that opens a choose-a-new-password screen, "Send it again" resends confirmations, and errors are in plain language.
+
 ## Set up Stripe for paid tickets
 
 Payments use Stripe's hosted Checkout page, so card details go to Stripe and never touch Nexus. Two server functions in `supabase/functions` do the work:
