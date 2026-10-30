@@ -1,18 +1,18 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BackHeader, Screen } from '../components/Chrome';
-import { Icon } from '../components/Icon';
-import { FairPlay, LiveCode } from '../components/Tickets';
-import { Button, Card, Rise, Tap, text } from '../components/ui';
-import { events, profile } from '../data/content';
-import { money } from '../data/fees';
-import { fetchMyTickets, orderStatus, useLoad } from '../lib/api';
-import { useAuth } from '../lib/auth';
-import { toNexusEvent } from '../lib/mappers';
-import { Ticket, useDemo } from '../state/DemoState';
-import { colors, fonts } from '../theme';
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BackHeader, Screen } from "../components/Chrome";
+import { Icon } from "../components/Icon";
+import { DoorCode, FairPlay, LiveCode } from "../components/Tickets";
+import { Button, Card, Rise, Tap, text } from "../components/ui";
+import { events, profile } from "../data/content";
+import { money } from "../data/fees";
+import { fetchMyTickets, orderStatus, useLoad } from "../lib/api";
+import { useAuth } from "../lib/auth";
+import { toNexusEvent } from "../lib/mappers";
+import { Ticket, useDemo } from "../state/DemoState";
+import { colors, fonts } from "../theme";
 
 export default function Tickets() {
   const { live } = useAuth();
@@ -23,11 +23,17 @@ function DemoTickets() {
   const { tickets, drawings } = useDemo();
   const insets = useSafeAreaInsets();
   // Start with the buyer's own ticket from their latest order open.
-  const [openId, setOpenId] = useState<string | null>(() => [...tickets].reverse().find((t) => t.holder === profile.name)?.id ?? null);
+  const [openId, setOpenId] = useState<string | null>(
+    () =>
+      [...tickets].reverse().find((t) => t.holder === profile.name)?.id ?? null,
+  );
   const entered = events.filter((e) => drawings[e.id]);
 
   return (
-    <Screen header={<BackHeader label="Events" fallback="/events" />} contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}>
+    <Screen
+      header={<BackHeader label="Events" fallback="/events" />}
+      contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}
+    >
       <Text style={styles.title} accessibilityRole="header">
         My tickets
       </Text>
@@ -35,15 +41,26 @@ function DemoTickets() {
       {tickets.length === 0 && entered.length === 0 ? (
         <Card style={styles.empty}>
           <Icon name="ticket" size={32} color={colors.olive} />
-          <Text style={[text.strong, { textAlign: 'center' }]}>No tickets yet</Text>
-          <Text style={[text.sub, { textAlign: 'center' }]}>Tickets you buy or RSVP for land here, ready to scan at the door.</Text>
-          <Button label="Browse events" onPress={() => router.replace('/events')} />
+          <Text style={[text.strong, { textAlign: "center" }]}>
+            No tickets yet
+          </Text>
+          <Text style={[text.sub, { textAlign: "center" }]}>
+            Tickets you buy or RSVP for land here, ready to scan at the door.
+          </Text>
+          <Button
+            label="Browse events"
+            onPress={() => router.replace("/events")}
+          />
         </Card>
       ) : null}
 
       {tickets.map((t, i) => (
         <Rise key={t.id} delay={i * 60}>
-          <TicketCard ticket={t} open={openId === t.id} onToggle={() => setOpenId(openId === t.id ? null : t.id)} />
+          <TicketCard
+            ticket={t}
+            open={openId === t.id}
+            onToggle={() => setOpenId(openId === t.id ? null : t.id)}
+          />
         </Rise>
       ))}
 
@@ -62,7 +79,15 @@ function DemoTickets() {
   );
 }
 
-function TicketCard({ ticket: t, open, onToggle }: { ticket: Ticket; open: boolean; onToggle: () => void }) {
+function TicketCard({
+  ticket: t,
+  open,
+  onToggle,
+}: {
+  ticket: Ticket;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const { showToast } = useDemo();
   const event = events.find((e) => e.id === t.eventId);
   if (!event) return null;
@@ -76,12 +101,14 @@ function TicketCard({ ticket: t, open, onToggle }: { ticket: Ticket; open: boole
       codeSeed={t.id}
       open={open}
       onToggle={onToggle}
-      onTransfer={() => showToast('Transfers are **free** and go to a verified Nexus member.')}
+      onTransfer={() =>
+        showToast("Transfers are **free** and go to a verified Nexus member.")
+      }
       onResell={() =>
         showToast(
           t.price > 0
             ? `Resale is capped at what you paid: **${money(t.price)}**. The next fan on the waitlist gets it.`
-            : 'Free RSVPs can’t be sold. Release it so someone else can come.',
+            : "Free RSVPs can’t be sold. Release it so someone else can come.",
         )
       }
     />
@@ -100,6 +127,7 @@ function TicketView({
   onToggle,
   onTransfer,
   onResell,
+  door,
 }: {
   month: string;
   day: string;
@@ -109,12 +137,19 @@ function TicketView({
   codeSeed: string;
   open: boolean;
   onToggle: () => void;
-  onTransfer: () => void;
-  onResell: () => void;
+  /** Demo only. Live tickets show their door code and no actions until transfers ship. */
+  onTransfer?: () => void;
+  onResell?: () => void;
+  door?: { code: string; status: "valid" | "used" | "refunded" };
 }) {
   return (
     <View style={styles.ticket}>
-      <Tap accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={onToggle} style={styles.ticketTop}>
+      <Tap
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        onPress={onToggle}
+        style={styles.ticketTop}
+      >
         <View style={styles.date}>
           <Text style={styles.month}>{month}</Text>
           <Text style={styles.day}>{day}</Text>
@@ -124,7 +159,11 @@ function TicketView({
           <Text style={styles.ticketMeta}>{line}</Text>
           <Text style={styles.ticketMeta}>{holder}</Text>
         </View>
-        <Icon name={open ? 'chevron' : 'ticket'} size={20} color={colors.lime} />
+        <Icon
+          name={open ? "chevron" : "ticket"}
+          size={20}
+          color={colors.lime}
+        />
       </Tap>
 
       {/* Perforation between stub and body */}
@@ -137,18 +176,30 @@ function TicketView({
       {open ? (
         <View style={styles.ticketBody}>
           <View style={styles.codePanel}>
-            <LiveCode ticketId={codeSeed} />
+            {door ? (
+              <DoorCode code={door.code} holder={holder} status={door.status} />
+            ) : (
+              <LiveCode ticketId={codeSeed} />
+            )}
           </View>
-          <View style={styles.actions}>
-            <Button variant="lime" label="Transfer" icon={<Icon name="send" size={16} />} style={{ flex: 1, height: 44 }} onPress={onTransfer} />
-            <Button
-              variant="outlineDark"
-              label="Resell"
-              icon={<Icon name="tag" size={16} color={colors.cream} />}
-              style={{ flex: 1, height: 44 }}
-              onPress={onResell}
-            />
-          </View>
+          {onTransfer && onResell ? (
+            <View style={styles.actions}>
+              <Button
+                variant="lime"
+                label="Transfer"
+                icon={<Icon name="send" size={16} />}
+                style={{ flex: 1, height: 44 }}
+                onPress={onTransfer}
+              />
+              <Button
+                variant="outlineDark"
+                label="Resell"
+                icon={<Icon name="tag" size={16} color={colors.cream} />}
+                style={{ flex: 1, height: 44 }}
+                onPress={onResell}
+              />
+            </View>
+          ) : null}
         </View>
       ) : null}
     </View>
@@ -157,15 +208,20 @@ function TicketView({
 
 /** Real tickets from the database, and confirmation after returning from Stripe. */
 function LiveTickets() {
-  const { order, cancelled } = useLocalSearchParams<{ order?: string; cancelled?: string }>();
+  const { order, cancelled } = useLocalSearchParams<{
+    order?: string;
+    cancelled?: string;
+  }>();
   const { showToast } = useDemo();
   const insets = useSafeAreaInsets();
   const loaded = useLoad(fetchMyTickets, []);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<'waiting' | 'expired' | null>(order && !cancelled ? 'waiting' : null);
+  const [confirming, setConfirming] = useState<"waiting" | "expired" | null>(
+    order && !cancelled ? "waiting" : null,
+  );
 
   useEffect(() => {
-    if (cancelled) showToast('Payment cancelled. **Nothing was charged.**');
+    if (cancelled) showToast("Payment cancelled. **Nothing was charged.**");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cancelled]);
 
@@ -176,14 +232,14 @@ function LiveTickets() {
     const timer = setInterval(async () => {
       tries++;
       const status = await orderStatus(order).catch(() => null);
-      if (status === 'paid') {
+      if (status === "paid") {
         clearInterval(timer);
         setConfirming(null);
         await loaded.reload();
-        showToast('You’re in. **Your tickets are here.**');
-      } else if (status === 'expired' || tries > 30) {
+        showToast("You’re in. **Your tickets are here.**");
+      } else if (status === "expired" || tries > 30) {
         clearInterval(timer);
-        setConfirming('expired');
+        setConfirming("expired");
       }
     }, 2000);
     return () => clearInterval(timer);
@@ -194,31 +250,48 @@ function LiveTickets() {
   const first = rows[0]?.ticket.id ?? null;
 
   return (
-    <Screen header={<BackHeader label="Events" fallback="/events" />} contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}>
+    <Screen
+      header={<BackHeader label="Events" fallback="/events" />}
+      contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}
+    >
       <Text style={styles.title} accessibilityRole="header">
         My tickets
       </Text>
 
-      {confirming === 'waiting' ? (
+      {confirming === "waiting" ? (
         <Card style={styles.drawing}>
           <ActivityIndicator color={colors.forest} />
-          <Text style={[text.strong, { flex: 1, fontSize: 14 }]}>Confirming your payment with Stripe…</Text>
+          <Text style={[text.strong, { flex: 1, fontSize: 14 }]}>
+            Confirming your payment with Stripe…
+          </Text>
         </Card>
       ) : null}
-      {confirming === 'expired' ? (
+      {confirming === "expired" ? (
         <Card style={styles.drawing}>
           <Icon name="clock" size={18} color={colors.forest} />
-          <Text style={[text.sub, { flex: 1 }]}>We haven’t heard from Stripe yet. If you were charged, your tickets will appear here shortly.</Text>
+          <Text style={[text.sub, { flex: 1 }]}>
+            We haven’t heard from Stripe yet. If you were charged, your tickets
+            will appear here shortly.
+          </Text>
         </Card>
       ) : null}
 
-      {loaded.loading && !loaded.data ? <ActivityIndicator color={colors.forest} /> : null}
+      {loaded.loading && !loaded.data ? (
+        <ActivityIndicator color={colors.forest} />
+      ) : null}
       {loaded.data && rows.length === 0 && !confirming ? (
         <Card style={styles.empty}>
           <Icon name="ticket" size={32} color={colors.olive} />
-          <Text style={[text.strong, { textAlign: 'center' }]}>No tickets yet</Text>
-          <Text style={[text.sub, { textAlign: 'center' }]}>Tickets you buy land here, ready to scan at the door.</Text>
-          <Button label="Browse events" onPress={() => router.replace('/events')} />
+          <Text style={[text.strong, { textAlign: "center" }]}>
+            No tickets yet
+          </Text>
+          <Text style={[text.sub, { textAlign: "center" }]}>
+            Tickets you buy land here, each with its own door code.
+          </Text>
+          <Button
+            label="Browse events"
+            onPress={() => router.replace("/events")}
+          />
         </Card>
       ) : null}
 
@@ -228,16 +301,15 @@ function LiveTickets() {
         return (
           <Rise key={t.id} delay={i * 60}>
             <TicketView
-              month={e?.month ?? ''}
-              day={e?.day ?? ''}
-              title={e?.title ?? 'Event'}
-              line={`${t.tier_name} · ${money(t.price_cents / 100)}${t.status !== 'valid' ? ` · ${t.status}` : ''}`}
+              month={e?.month ?? ""}
+              day={e?.day ?? ""}
+              title={e?.title ?? "Event"}
+              line={`${t.tier_name} · ${money(t.price_cents / 100)}${t.status !== "valid" ? ` · ${t.status}` : ""}`}
               holder={t.holder_name}
               codeSeed={t.code_secret}
               open={isOpen}
-              onToggle={() => setOpenId(isOpen ? '' : t.id)}
-              onTransfer={() => showToast('Free transfers to another member are coming next.')}
-              onResell={() => showToast(`Face-value resale (up to **${money(t.price_cents / 100)}**) is coming next.`)}
+              onToggle={() => setOpenId(isOpen ? "" : t.id)}
+              door={{ code: t.door_code, status: t.status }}
             />
           </Rise>
         );
@@ -250,20 +322,77 @@ function LiveTickets() {
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 16, paddingTop: 4, gap: 14 },
-  title: { fontFamily: fonts.display800, fontSize: 30, letterSpacing: -0.8, color: colors.ink },
-  empty: { padding: 24, gap: 10, alignItems: 'center' },
-  drawing: { padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  ticket: { backgroundColor: colors.forest, borderRadius: 22, overflow: 'hidden' },
-  ticketTop: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
-  date: { width: 56, height: 60, borderRadius: 14, backgroundColor: colors.lime, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  month: { fontFamily: fonts.display700, fontSize: 10, letterSpacing: 1, color: colors.ink },
-  day: { fontFamily: fonts.display800, fontSize: 20, lineHeight: 20, color: colors.ink },
-  ticketTitle: { fontFamily: fonts.display700, fontSize: 17, lineHeight: 20, color: colors.cream },
-  ticketMeta: { fontFamily: fonts.body400, fontSize: 12.5, color: colors.creamMuted },
-  perf: { height: 20, justifyContent: 'center' },
-  notch: { position: 'absolute', width: 20, height: 20, borderRadius: 10, backgroundColor: colors.cream },
-  dash: { marginHorizontal: 18, borderTopWidth: 2, borderStyle: 'dashed', borderColor: colors.forest2 },
+  title: {
+    fontFamily: fonts.display800,
+    fontSize: 30,
+    letterSpacing: -0.8,
+    color: colors.ink,
+  },
+  empty: { padding: 24, gap: 10, alignItems: "center" },
+  drawing: { padding: 16, flexDirection: "row", alignItems: "center", gap: 12 },
+  ticket: {
+    backgroundColor: colors.forest,
+    borderRadius: 22,
+    overflow: "hidden",
+  },
+  ticketTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    padding: 16,
+  },
+  date: {
+    width: 56,
+    height: 60,
+    borderRadius: 14,
+    backgroundColor: colors.lime,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
+  month: {
+    fontFamily: fonts.display700,
+    fontSize: 10,
+    letterSpacing: 1,
+    color: colors.ink,
+  },
+  day: {
+    fontFamily: fonts.display800,
+    fontSize: 20,
+    lineHeight: 20,
+    color: colors.ink,
+  },
+  ticketTitle: {
+    fontFamily: fonts.display700,
+    fontSize: 17,
+    lineHeight: 20,
+    color: colors.cream,
+  },
+  ticketMeta: {
+    fontFamily: fonts.body400,
+    fontSize: 12.5,
+    color: colors.creamMuted,
+  },
+  perf: { height: 20, justifyContent: "center" },
+  notch: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.cream,
+  },
+  dash: {
+    marginHorizontal: 18,
+    borderTopWidth: 2,
+    borderStyle: "dashed",
+    borderColor: colors.forest2,
+  },
   ticketBody: { padding: 16, paddingTop: 4, gap: 16 },
-  codePanel: { backgroundColor: colors.cream, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 12 },
-  actions: { flexDirection: 'row', gap: 8 },
+  codePanel: {
+    backgroundColor: colors.cream,
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
+  actions: { flexDirection: "row", gap: 8 },
 });

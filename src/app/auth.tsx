@@ -5,6 +5,7 @@ import { Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { Button, Chip, Tap, text } from '../components/ui';
 import { authMessage, useAuth } from '../lib/auth';
+import { legal, openPage } from '../lib/links';
 import { colors, fonts } from '../theme';
 
 type Mode = 'signin' | 'signup' | 'forgot';
@@ -146,6 +147,19 @@ export default function AuthScreen() {
             style={!(ready && !busy) && { opacity: 0.45 }}
           />
 
+          {mode === 'signup' ? (
+            <Text style={[text.small, { textAlign: 'center' }]}>
+              By creating an account you agree to the{' '}
+              <Text accessibilityRole="link" style={styles.inlineLink} onPress={() => openPage(legal.terms)}>
+                Terms and community guidelines
+              </Text>{' '}
+              and{' '}
+              <Text accessibilityRole="link" style={styles.inlineLink} onPress={() => openPage(legal.privacy)}>
+                Privacy policy
+              </Text>
+              . Nexus has zero tolerance for harassment, hate or stolen work.
+            </Text>
+          ) : null}
           {mode === 'signin' ? (
             <Tap accessibilityRole="button" onPress={() => switchTo('forgot')} style={{ alignSelf: 'center' }}>
               <Text style={styles.link}>Forgot password?</Text>
@@ -212,7 +226,7 @@ const styles = StyleSheet.create({
   form: { gap: 14 },
   label: { fontFamily: fonts.body600, fontSize: 13.5, color: colors.forest },
   input: {
-    height: 50,
+    minHeight: 50,
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: colors.line,
@@ -223,6 +237,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   error: { fontFamily: fonts.body500, fontSize: 13.5, color: '#9A2B1F' },
+  inlineLink: { fontFamily: fonts.body600, color: colors.forest, textDecorationLine: 'underline' },
   link: { fontFamily: fonts.body600, fontSize: 14, color: colors.forest, textDecorationLine: 'underline', paddingVertical: 4 },
   sent: { backgroundColor: colors.forest, borderRadius: 20, padding: 18, gap: 10 },
   sentTitle: { fontFamily: fonts.display800, fontSize: 20, color: colors.lime },

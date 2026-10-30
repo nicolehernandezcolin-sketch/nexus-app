@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../../components/Chrome';
 import { LivePostCard, messageUser } from '../../components/Feed';
 import { Icon } from '../../components/Icon';
+import { SafetyMenu } from '../../components/Safety';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, SectionTitle, Tap, text } from '../../components/ui';
 import { allWork, people, personById, workFor } from '../../data/content';
 import { avatarUrls, fetchCheckins, fetchPostsBy, getProfile, isFollowing, requestCollab, setFollowing, useLoad } from '../../lib/api';
@@ -80,6 +81,7 @@ function LivePerson({ id }: { id: string }) {
               <Text style={styles.sub}>{[p.tagline, p.location].filter(Boolean).join(' · ')}</Text>
             ) : null}
           </View>
+          <SafetyMenu light target={{ type: 'profile', id: p.id }} person={{ id: p.id, name: p.name }} onBlocked={() => router.back()} />
         </View>
         {p.bio ? <Text style={styles.bio}>{p.bio}</Text> : null}
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -114,7 +116,7 @@ function LivePerson({ id }: { id: string }) {
 
         <SectionTitle>Posts</SectionTitle>
         {posts.length ? (
-          posts.map((item) => <LivePostCard key={item.post.id} item={item} />)
+          posts.map((item) => <LivePostCard key={item.post.id} item={item} onChanged={loaded.reload} />)
         ) : (
           <Text style={text.sub}>{first} hasn’t posted yet.</Text>
         )}

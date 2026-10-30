@@ -294,7 +294,7 @@ export async function fetchEvents(): Promise<EventView[]> {
     db().from('drawing_entries').select('event_id').eq('user_id', uid),
     signedUrls('media', events.map((e) => e.cover_path)),
     getProfiles([...new Set(events.map((e) => e.host))]),
-    db().from('tickets').select('event_id').eq('owner', uid).eq('status', 'valid'),
+    db().from('tickets').select('event_id').eq('owner', uid).neq('status', 'refunded'),
   ]);
   const heldRows = check(held) as { event_id: string }[];
   const r = check(rsvps) as { event_id: string; user_id: string }[];
@@ -453,7 +453,10 @@ export type TicketRow = {
   tier_name: string;
   price_cents: number;
   code_secret: string;
+  /** Six characters shown on the ticket; the host finds it on the door list. */
+  door_code: string;
   status: 'valid' | 'used' | 'refunded';
+  used_at: string | null;
   created_at: string;
 };
 
@@ -483,4 +486,56 @@ export async function fetchMyTickets() {
 export async function orderStatus(orderId: string) {
   const row = check(await db().from('orders').select('status').eq('id', orderId).maybeSingle()) as { status: string } | null;
   return row?.status ?? null;
+}
+
+/* ---------- Door check-in (hosts) ---------- */
+
+/** Every ticket sold for an event you host, for the door list. */
+export async function fetchDoorList(eventId: string) {
+  return check(
+    await db().from('tickets').select('*').eq('event_id', eventId).order('holder_name', { ascending: true }),
+  ) as TicketRow[];
+}
+
+/** Checks a ticket in. Each ticket gets in once. */
+export async function checkInTicket(ticketId: string) {
+  const { data, error } = await db().rpc('check_in_ticket', { ticket: ticketId });
+  if (error) throw new Error(error.message);
+  return data as { result: 'ok' | 'already' | 'refunded'; used_at?: string };
+}
+
+/* ---------- Safety: reports and blocks ---------- */
+
+export type ReportTarget = 'post' | 'profile' | 'message' | 'group';
+export type ReportReason = 'spam' | 'harassment' | 'hate' | 'sexual' | 'violence' | 'stolen_work' | 'scam' | 'other';
+
+export async function report(targetType: ReportTarget, targetId: string, reason: ReportReason, details = '') {
+  const reporter = await myId();
+  check(await db().from('reports').insert({ reporter, target_type: targetType, target_id: targetId, reason, details }));
+}
+
+export async function blockMember(personId: string) {
+  const blocker = await myId();
+  check(await db().from('blocks').upsert({ blocker, blocked: personId }));
+}
+
+export async function unblockMember(personId: string) {
+  const blocker = await myId();
+  check(await db().from('blocks').delete().eq('blocker', blocker).eq('blocked', personId));
+}
+
+export async function fetchBlocked() {
+  const rows = check(await db().from('blocks').select('blocked')) as { blocked: string }[];
+  return getProfiles(rows.map((r) => r.blocked));
+}
+
+/* ---------- Account ---------- */
+
+/** Permanently deletes your account and everything you posted. */
+export async function deleteMyAccount() {
+  const { error } = await db().functions.invoke('delete-account', { body: {} });
+  if (error) {
+    const body = await (error as { context?: Response }).context?.json?.().catch(() => null);
+    throw new Error(body?.error ?? error.message);
+  }
 }

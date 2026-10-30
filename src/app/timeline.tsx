@@ -156,7 +156,7 @@ function LiveFeed() {
     <>
       {data.map((item, i) => (
         <Rise key={item.post.id} delay={Math.min(i, 6) * 60}>
-          <LivePostCard item={item} />
+          <LivePostCard item={item} onChanged={reload} />
         </Rise>
       ))}
     </>

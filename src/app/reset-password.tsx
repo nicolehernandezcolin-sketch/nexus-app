@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.paper, borderRadius: 20, padding: 18, gap: 10 },
   label: { fontFamily: fonts.body600, fontSize: 13.5, color: colors.forest },
   input: {
-    height: 50,
+    minHeight: 50,
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: colors.line,

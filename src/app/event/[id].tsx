@@ -1,21 +1,42 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BackHeader, Screen } from '../../components/Chrome';
-import { LiveTeamList, TeamList } from '../../components/Team';
-import { Icon, IconName } from '../../components/Icon';
-import { FairPlay, PriceBreakdown, QuantityStepper } from '../../components/Tickets';
-import { ArtBlock, Avatar, Button, Card, Pill, Rise, SectionTitle, Tap, text } from '../../components/ui';
-import { events, NexusEvent, TicketTier } from '../../data/content';
-import { money, TICKET_LIMIT } from '../../data/fees';
-import { enterDrawing as enterLiveDrawing, fetchEvent, setRsvp, useLoad } from '../../lib/api';
-import { useAuth } from '../../lib/auth';
-import { LiveEvent, toNexusEvent } from '../../lib/mappers';
-import { useDemo } from '../../state/DemoState';
-import { colors, fonts } from '../../theme';
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BackHeader, Screen } from "../../components/Chrome";
+import { LiveTeamList, TeamList } from "../../components/Team";
+import { Icon, IconName } from "../../components/Icon";
+import {
+  FairPlay,
+  PriceBreakdown,
+  QuantityStepper,
+} from "../../components/Tickets";
+import {
+  ArtBlock,
+  Avatar,
+  Button,
+  Card,
+  Pill,
+  Rise,
+  SectionTitle,
+  Tap,
+  text,
+} from "../../components/ui";
+import { events, NexusEvent, TicketTier } from "../../data/content";
+import { allIn, feePerTicket, money, TICKET_LIMIT } from "../../data/fees";
+import {
+  enterDrawing as enterLiveDrawing,
+  fetchEvent,
+  setRsvp,
+  useLoad,
+} from "../../lib/api";
+import { useAuth } from "../../lib/auth";
+import { LiveEvent, toNexusEvent } from "../../lib/mappers";
+import { useDemo } from "../../state/DemoState";
+import { colors, fonts } from "../../theme";
 
-export async function generateStaticParams(): Promise<Record<string, string>[]> {
+export async function generateStaticParams(): Promise<
+  Record<string, string>[]
+> {
   return events.map((e) => ({ id: e.id }));
 }
 
@@ -35,7 +56,10 @@ function LiveEventScreen({ id }: { id: string }) {
   }, [id]);
   if (loaded.loading && !loaded.data) {
     return (
-      <Screen header={<BackHeader label="Back" fallback="/events" />} contentStyle={{ padding: 24 }}>
+      <Screen
+        header={<BackHeader label="Back" fallback="/events" />}
+        contentStyle={{ padding: 24 }}
+      >
         <ActivityIndicator color={colors.forest} />
       </Screen>
     );
@@ -44,11 +68,21 @@ function LiveEventScreen({ id }: { id: string }) {
   return <EventDetail event={loaded.data} onChanged={loaded.reload} />;
 }
 
-function EventDetail({ event: e, onChanged }: { event: NexusEvent; onChanged?: () => void }) {
+function EventDetail({
+  event: e,
+  onChanged,
+}: {
+  event: NexusEvent;
+  onChanged?: () => void;
+}) {
   const liveRow = (e as Partial<LiveEvent>).live;
+  const { session } = useAuth();
   const insets = useSafeAreaInsets();
   return (
-    <Screen header={<BackHeader label="Back" fallback="/events" />} contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}>
+    <Screen
+      header={<BackHeader label="Back" fallback="/events" />}
+      contentStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}
+    >
       <Rise>
         <ArtBlock art={e.art} radius={22} height={200} />
       </Rise>
@@ -66,25 +100,67 @@ function EventDetail({ event: e, onChanged }: { event: NexusEvent; onChanged?: (
       <Text style={text.body}>{e.about}</Text>
 
       <View style={styles.friends}>
-        <View style={{ flexDirection: 'row' }}>
+        <View style={{ flexDirection: "row" }}>
           {e.friends.map((f, j) => (
             <View key={f} style={{ marginLeft: j ? -8 : 0 }}>
-              <Avatar initials={f} size={30} bg={[colors.olive, colors.forest, colors.lime][j % 3]} fg={j % 3 === 2 ? colors.ink : colors.cream} ring={colors.cream} />
+              <Avatar
+                initials={f}
+                size={30}
+                bg={[colors.olive, colors.forest, colors.lime][j % 3]}
+                fg={j % 3 === 2 ? colors.ink : colors.cream}
+                ring={colors.cream}
+              />
             </View>
           ))}
         </View>
         <Text style={text.small}>{e.friendsText}</Text>
       </View>
 
-      {liveRow ? <LiveTeamList eventId={liveRow.id} title="Who’s putting it on" /> : <TeamList workId={e.id} title="Who’s putting it on" />}
+      {liveRow ? (
+        <LiveTeamList eventId={liveRow.id} title="Who’s putting it on" />
+      ) : (
+        <TeamList workId={e.id} title="Who’s putting it on" />
+      )}
 
-      {e.sale.kind === 'tickets' ? <TicketPicker event={e} tiers={e.sale.tiers} /> : null}
-      {e.sale.kind === 'free' ? <FreeRsvp event={e} note={e.sale.note} onChanged={onChanged} /> : null}
-      {e.sale.kind === 'drawing' ? <Drawing event={e} note={e.sale.note} onChanged={onChanged} /> : null}
+      {liveRow &&
+      liveRow.host === session?.user.id &&
+      e.sale.kind === "tickets" ? (
+        <Button
+          variant="big"
+          label="Door list · check people in"
+          icon={<Icon name="ticket" size={18} color={colors.lime} />}
+          onPress={() =>
+            router.push({ pathname: "/door/[id]", params: { id: liveRow.id } })
+          }
+        />
+      ) : null}
+
+      {e.sale.kind === "tickets" ? (
+        <TicketPicker event={e} tiers={e.sale.tiers} />
+      ) : null}
+      {e.sale.kind === "free" ? (
+        <FreeRsvp event={e} note={e.sale.note} onChanged={onChanged} />
+      ) : null}
+      {e.sale.kind === "drawing" ? (
+        liveRow ? (
+          // Drawings aren't run by the live app yet; say so rather than take entries that go nowhere.
+          <Card style={styles.panel}>
+            <SectionTitle>Tickets soon</SectionTitle>
+            <Text style={text.sub}>
+              Tickets for this show aren’t on sale yet. Follow {e.host} to hear
+              when they are.
+            </Text>
+          </Card>
+        ) : (
+          <Drawing event={e} note={e.sale.note} onChanged={onChanged} />
+        )
+      ) : null}
 
       <FairPlay />
-      <Text style={[text.small, { textAlign: 'center' }]}>
-        {liveRow ? 'Payments are processed by Stripe. Nexus never sees your card.' : 'Demo prices. No card is charged.'}
+      <Text style={[text.small, { textAlign: "center" }]}>
+        {liveRow
+          ? "Payments are processed by Stripe. Nexus never sees your card."
+          : "Demo prices. No card is charged."}
       </Text>
     </Screen>
   );
@@ -92,20 +168,28 @@ function EventDetail({ event: e, onChanged }: { event: NexusEvent; onChanged?: (
 
 function Fact({ icon, text: t }: { icon: IconName; text: string }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
       <Icon name={icon} size={16} color={colors.olive} strokeWidth={2.2} />
       <Text style={[text.sub, { flex: 1 }]}>{t}</Text>
     </View>
   );
 }
 
-function TicketPicker({ event: e, tiers }: { event: NexusEvent; tiers: TicketTier[] }) {
+function TicketPicker({
+  event: e,
+  tiers,
+}: {
+  event: NexusEvent;
+  tiers: TicketTier[];
+}) {
   const { tickets } = useDemo();
   const [tierId, setTierId] = useState(tiers[0].id);
   const [quantity, setQuantity] = useState(1);
   const tier = tiers.find((t) => t.id === tierId) ?? tiers[0];
   const liveRow = (e as Partial<LiveEvent>).live;
-  const owned = liveRow ? liveRow.ticketsHeld : tickets.filter((t) => t.eventId === e.id).length;
+  const owned = liveRow
+    ? liveRow.ticketsHeld
+    : tickets.filter((t) => t.eventId === e.id).length;
   const remaining = TICKET_LIMIT - owned;
 
   return (
@@ -120,14 +204,33 @@ function TicketPicker({ event: e, tiers }: { event: NexusEvent; tiers: TicketTie
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}
               onPress={() => setTierId(t.id)}
-              style={[styles.tier, on && { borderColor: colors.forest, backgroundColor: colors.limeSoft }]}
+              style={[
+                styles.tier,
+                on && {
+                  borderColor: colors.forest,
+                  backgroundColor: colors.limeSoft,
+                },
+              ]}
             >
-              <View style={[styles.radio, on && { borderColor: colors.forest }]}>{on ? <View style={styles.radioDot} /> : null}</View>
+              <View
+                style={[styles.radio, on && { borderColor: colors.forest }]}
+              >
+                {on ? <View style={styles.radioDot} /> : null}
+              </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={[text.strong, { fontSize: 14.5 }]}>{t.name}</Text>
                 {t.note ? <Text style={text.small}>{t.note}</Text> : null}
               </View>
-              <Text style={[text.strong, { fontSize: 15 }]}>{money(t.price)}</Text>
+              <View style={{ alignItems: "flex-end", gap: 1 }}>
+                <Text style={[text.strong, { fontSize: 15 }]}>
+                  {money(allIn(t.price))}
+                </Text>
+                {t.price > 0 ? (
+                  <Text style={text.small}>
+                    incl. {money(feePerTicket(t.price))} fee
+                  </Text>
+                ) : null}
+              </View>
             </Tap>
           );
         })}
@@ -139,44 +242,76 @@ function TicketPicker({ event: e, tiers }: { event: NexusEvent; tiers: TicketTie
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={[text.strong, { fontSize: 14.5 }]}>How many?</Text>
               <Text style={text.small}>
-                Up to {TICKET_LIMIT} per person{owned ? ` · you have ${owned}` : ''}
+                Up to {TICKET_LIMIT} per person
+                {owned ? ` · you have ${owned}` : ""}
               </Text>
             </View>
-            <QuantityStepper value={Math.min(quantity, remaining)} max={remaining} onChange={setQuantity} />
+            <QuantityStepper
+              value={Math.min(quantity, remaining)}
+              max={remaining}
+              onChange={setQuantity}
+            />
           </View>
-          <PriceBreakdown price={tier.price} quantity={Math.min(quantity, remaining)} />
+          <PriceBreakdown
+            price={tier.price}
+            quantity={Math.min(quantity, remaining)}
+          />
           <Button
             variant="big"
             label="Continue"
             onPress={() =>
-              router.push({ pathname: '/checkout/[id]', params: { id: e.id, tier: tier.id, qty: String(Math.min(quantity, remaining)) } })
+              router.push({
+                pathname: "/checkout/[id]",
+                params: {
+                  id: e.id,
+                  tier: tier.id,
+                  qty: String(Math.min(quantity, remaining)),
+                },
+              })
             }
           />
         </>
       ) : (
         <View style={styles.limit}>
           <Icon name="lock" size={18} color={colors.forest} />
-          <Text style={[text.small, { flex: 1, color: colors.forest }]}>You have the most tickets one person can hold for this show.</Text>
-          <Button variant="ghost" label="My tickets" style={{ height: 38 }} onPress={() => router.push('/tickets')} />
+          <Text style={[text.small, { flex: 1, color: colors.forest }]}>
+            You have the most tickets one person can hold for this show.
+          </Text>
+          <Button
+            variant="ghost"
+            label="My tickets"
+            style={{ height: 38 }}
+            onPress={() => router.push("/tickets")}
+          />
         </View>
       )}
     </Card>
   );
 }
 
-function FreeRsvp({ event: e, note, onChanged }: { event: NexusEvent; note: string; onChanged?: () => void }) {
+function FreeRsvp({
+  event: e,
+  note,
+  onChanged,
+}: {
+  event: NexusEvent;
+  note: string;
+  onChanged?: () => void;
+}) {
   const { tickets, buyTickets, showToast } = useDemo();
   const liveRow = (e as Partial<LiveEvent>).live;
-  const going = liveRow ? liveRow.mine : tickets.some((t) => t.eventId === e.id);
+  const going = liveRow
+    ? liveRow.mine
+    : tickets.some((t) => t.eventId === e.id);
   const rsvp = async (yes: boolean) => {
     if (!liveRow) {
-      buyTickets(e.id, { id: 'rsvp', name: 'Free RSVP', price: 0 }, 1);
-      showToast('You’re on the list. See you **in person**.');
+      buyTickets(e.id, { id: "rsvp", name: "Free RSVP", price: 0 }, 1);
+      showToast("You’re on the list. See you **in person**.");
       return;
     }
     try {
       await setRsvp(liveRow.id, yes);
-      if (yes) showToast('You’re on the list. See you **in person**.');
+      if (yes) showToast("You’re on the list. See you **in person**.");
       onChanged?.();
     } catch (err) {
       showToast((err as Error).message);
@@ -191,14 +326,22 @@ function FreeRsvp({ event: e, note, onChanged }: { event: NexusEvent; note: stri
           <>
             <View style={[styles.limit, { backgroundColor: colors.lime }]}>
               <Icon name="check" size={18} strokeWidth={2.6} />
-              <Text style={[text.strong, { flex: 1, fontSize: 14 }]}>You’re going</Text>
+              <Text style={[text.strong, { flex: 1, fontSize: 14 }]}>
+                You’re going
+              </Text>
             </View>
-            <Button variant="ghost" label="Can’t make it" onPress={() => rsvp(false)} />
+            <Button
+              variant="ghost"
+              label="Can’t make it"
+              onPress={() => rsvp(false)}
+            />
           </>
         ) : (
           <Button variant="big" label="RSVP" onPress={() => rsvp(true)} />
         )}
-        <Text style={text.small}>Free events have no fees. One RSVP per member.</Text>
+        <Text style={text.small}>
+          Free events have no fees. One RSVP per member.
+        </Text>
       </Card>
     );
   }
@@ -207,23 +350,38 @@ function FreeRsvp({ event: e, note, onChanged }: { event: NexusEvent; note: stri
       <SectionTitle>Free entry</SectionTitle>
       <Text style={text.sub}>{note}</Text>
       {going ? (
-        <Button variant="lime" label="You’re on the list · view ticket" onPress={() => router.push('/tickets')} />
+        <Button
+          variant="lime"
+          label="You’re on the list · view ticket"
+          onPress={() => router.push("/tickets")}
+        />
       ) : (
         <Button
           variant="big"
           label="RSVP"
           onPress={() => {
-            buyTickets(e.id, { id: 'rsvp', name: 'Free RSVP', price: 0 }, 1);
-            showToast('You’re on the list. See you **in person**.');
+            buyTickets(e.id, { id: "rsvp", name: "Free RSVP", price: 0 }, 1);
+            showToast("You’re on the list. See you **in person**.");
           }}
         />
       )}
-      <Text style={text.small}>Free events have no fees. RSVPs still go to verified members, one per person.</Text>
+      <Text style={text.small}>
+        Free events have no fees. RSVPs still go to verified members, one per
+        person.
+      </Text>
     </Card>
   );
 }
 
-function Drawing({ event: e, note, onChanged }: { event: NexusEvent; note: string; onChanged?: () => void }) {
+function Drawing({
+  event: e,
+  note,
+  onChanged,
+}: {
+  event: NexusEvent;
+  note: string;
+  onChanged?: () => void;
+}) {
   const { drawings, enterDrawing: enterDemo, showToast } = useDemo();
   const liveRow = (e as Partial<LiveEvent>).live;
   const entered = liveRow ? liveRow.entered : !!drawings[e.id];
@@ -236,14 +394,21 @@ function Drawing({ event: e, note, onChanged }: { event: NexusEvent; note: strin
       showToast((err as Error).message);
     }
   };
-  const steps = ['Enter before sales open. It doesn’t matter how fast.', 'One entry per verified person, equal odds. People who came to past Nexus events are drawn first.', 'Winners get a 24-hour window to buy at face value.'];
+  const steps = [
+    "Enter before sales open. It doesn’t matter how fast.",
+    "One entry per verified person, equal odds. People who came to past Nexus events are drawn first.",
+    "Winners get a 24-hour window to buy at face value.",
+  ];
   return (
     <Card style={styles.panel}>
       <SectionTitle>Fair drawing</SectionTitle>
       <Text style={text.sub}>{note}</Text>
       <View style={{ gap: 8 }}>
         {steps.map((s, i) => (
-          <View key={s} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+          <View
+            key={s}
+            style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}
+          >
             <View style={styles.stepNum}>
               <Text style={styles.stepNumText}>{i + 1}</Text>
             </View>
@@ -253,12 +418,16 @@ function Drawing({ event: e, note, onChanged }: { event: NexusEvent; note: strin
       </View>
       <View style={styles.priority}>
         <Icon name="star" size={16} color={colors.forest} />
-        <Text style={[text.small, { flex: 1, color: colors.forest }]}>You checked in at the 1st Edition, so you’re in the first round.</Text>
+        <Text style={[text.small, { flex: 1, color: colors.forest }]}>
+          You checked in at the 1st Edition, so you’re in the first round.
+        </Text>
       </View>
       {entered ? (
         <View style={[styles.limit, { backgroundColor: colors.lime }]}>
           <Icon name="check" size={18} strokeWidth={2.6} />
-          <Text style={[text.strong, { flex: 1, fontSize: 14 }]}>You’re in the drawing. We’ll notify you here.</Text>
+          <Text style={[text.strong, { flex: 1, fontSize: 14 }]}>
+            You’re in the drawing. We’ll notify you here.
+          </Text>
         </View>
       ) : (
         <Button
@@ -266,7 +435,7 @@ function Drawing({ event: e, note, onChanged }: { event: NexusEvent; note: strin
           label="Enter the drawing"
           onPress={() => {
             enterDrawing(e.id);
-            showToast('You’re in the drawing. **Good luck.**');
+            showToast("You’re in the drawing. **Good luck.**");
           }}
         />
       )}
@@ -276,7 +445,10 @@ function Drawing({ event: e, note, onChanged }: { event: NexusEvent; note: strin
 
 function NotFound() {
   return (
-    <Screen header={<BackHeader label="Back" fallback="/events" />} contentStyle={{ padding: 20 }}>
+    <Screen
+      header={<BackHeader label="Back" fallback="/events" />}
+      contentStyle={{ padding: 20 }}
+    >
       <Text style={text.sub}>We couldn’t find that event.</Text>
     </Screen>
   );
@@ -284,23 +456,67 @@ function NotFound() {
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 16, paddingTop: 4, gap: 18 },
-  title: { fontFamily: fonts.display800, fontSize: 28, lineHeight: 31, letterSpacing: -0.6, color: colors.ink },
-  friends: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  title: {
+    fontFamily: fonts.display800,
+    fontSize: 28,
+    lineHeight: 31,
+    letterSpacing: -0.6,
+    color: colors.ink,
+  },
+  friends: { flexDirection: "row", alignItems: "center", gap: 10 },
   panel: { padding: 16, gap: 14 },
   tier: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     padding: 14,
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: colors.line,
   },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.line2, alignItems: 'center', justifyContent: 'center' },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.forest },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  limit: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.limeSoft, borderRadius: 14, padding: 12 },
-  stepNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center' },
-  stepNumText: { fontFamily: fonts.display800, fontSize: 12, color: colors.lime },
-  priority: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.limeSoft, borderRadius: 14, padding: 12 },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.line2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.forest,
+  },
+  qtyRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  limit: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: colors.limeSoft,
+    borderRadius: 14,
+    padding: 12,
+  },
+  stepNum: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.forest,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepNumText: {
+    fontFamily: fonts.display800,
+    fontSize: 12,
+    color: colors.lime,
+  },
+  priority: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: colors.limeSoft,
+    borderRadius: 14,
+    padding: 12,
+  },
 });

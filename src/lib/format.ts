@@ -10,7 +10,7 @@ export const initialsOf = (name: string) =>
 
 export const firstNameOf = (name: string) => name.split(/\s+/)[0] || 'them';
 
-const avatarColors = [colors.forest, colors.olive, colors.ink];
+const avatarColors = [colors.forest, colors.forest2, colors.ink];
 
 /** A steady avatar color for someone without a photo. */
 export function colorFor(id: string) {

@@ -34,10 +34,16 @@ export function quote(price: number, quantity: number) {
 
 export const money = (n: number) => (n === 0 ? 'Free' : `$${n.toFixed(2)}`);
 
+/**
+ * What one ticket really costs, fee included. Live-event tickets must be advertised
+ * at this price (FTC fee rule, California's SB 478), so lists and tiers show it first.
+ */
+export const allIn = (price: number) => cents(price + feePerTicket(price));
+
 /** Short call-to-action for an event's sale type. */
 export function saleLabel(sale: { kind: 'tickets'; tiers: { price: number }[] } | { kind: 'free' } | { kind: 'drawing' }) {
   if (sale.kind === 'free') return 'Free RSVP';
   if (sale.kind === 'drawing') return 'Enter drawing';
-  const from = Math.min(...sale.tiers.map((t) => t.price));
-  return `Tickets $${from}${sale.tiers.length > 1 ? '+' : ''}`;
+  const from = Math.min(...sale.tiers.map((t) => allIn(t.price)));
+  return `Tickets ${money(from)}${sale.tiers.length > 1 ? '+' : ''}`;
 }

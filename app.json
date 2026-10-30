@@ -2,12 +2,17 @@
   "expo": {
     "name": "Nexus",
     "slug": "nexus-app",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "info.nexusglobal.app",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,7 +35,24 @@
       "expo-router",
       "expo-font",
       "expo-sqlite",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nexus uses your photos so you can add them to your profile, posts and private messages. Only the photos you pick are uploaded.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "backgroundColor": "#F7EDE4",
+          "resizeMode": "contain"
+        }
+      ]
     ],
     "scheme": "nexus",
     "backgroundColor": "#F2EEE4",

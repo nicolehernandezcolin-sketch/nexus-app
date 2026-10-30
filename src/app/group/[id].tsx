@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../../components/Chrome';
+import { SafetyMenu } from '../../components/Safety';
 import { LivePostCard, openProfile } from '../../components/Feed';
 import { PrivateBadge } from '../../components/Groups';
 import { Icon } from '../../components/Icon';
@@ -134,7 +135,27 @@ function LiveGroup({ id }: { id: string }) {
   };
 
   return (
-    <Screen header={<BackHeader label="Groups" fallback="/timeline" />} contentStyle={{ paddingBottom: 32 + insets.bottom }}>
+    <Screen
+      header={
+        <BackHeader
+          label="Groups"
+          fallback="/timeline"
+          right={
+            owner ? null : (
+              <SafetyMenu
+                target={{ type: 'group', id: group.id }}
+                person={(() => {
+                  const host = members.find((m) => m.id === group.owner);
+                  return host ? { id: host.id, name: host.name } : undefined;
+                })()}
+                onBlocked={() => router.back()}
+              />
+            )
+          }
+        />
+      }
+      contentStyle={{ paddingBottom: 32 + insets.bottom }}
+    >
       <Header name={group.name} about={group.about} members={members.length} />
       <View style={styles.body}>
         <View style={{ gap: 10 }}>
@@ -180,7 +201,7 @@ function LiveGroup({ id }: { id: string }) {
 
         <Composer groupId={group.id} name={group.name} />
         {posts.length ? (
-          posts.map((item) => <LivePostCard key={item.post.id} item={item} />)
+          posts.map((item) => <LivePostCard key={item.post.id} item={item} onChanged={loaded.reload} />)
         ) : (
           <Text style={text.sub}>No posts yet. Share something only this group should see.</Text>
         )}

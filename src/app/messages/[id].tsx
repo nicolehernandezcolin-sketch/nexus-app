@@ -1,11 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader } from '../../components/Chrome';
 import { openProfile } from '../../components/Feed';
 import { Icon } from '../../components/Icon';
+import { SafetyMenu } from '../../components/Safety';
 import { Avatar, Tap, text } from '../../components/ui';
 import { demoConversations } from '../../data/content';
 import { fetchConversation, sendMessage, useLoad } from '../../lib/api';
@@ -86,7 +87,15 @@ export default function Conversation() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.cream, paddingTop: insets.top }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <BackHeader label="Messages" fallback="/messages" />
+      <BackHeader
+        label="Messages"
+        fallback="/messages"
+        right={
+          live && other ? (
+            <SafetyMenu target={{ type: 'message', id }} person={{ id: other.id, name: other.name }} onBlocked={() => router.replace('/messages')} />
+          ) : null
+        }
+      />
       {other ? (
         <Tap accessibilityRole="link" onPress={() => (live ? openProfile(other.id, me?.id) : undefined)} style={styles.who}>
           <Avatar initials={other.initials} bg={other.color} size={40} />

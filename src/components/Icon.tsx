@@ -32,7 +32,9 @@ export type IconName =
   | 'image'
   | 'close'
   | 'sparkle'
-  | 'pencil';
+  | 'pencil'
+  | 'more'
+  | 'flag';
 
 type Props = { name: IconName; size?: number; color?: string; strokeWidth?: number };
 
@@ -163,6 +165,10 @@ function paths(name: IconName, p: object) {
       return <Path {...p} d="M6 6l12 12M18 6L6 18" />;
     case 'sparkle':
       return <Path {...p} d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />;
+    case 'more':
+      return <Path {...p} d="M5 12h.01M12 12h.01M19 12h.01" strokeWidth={3.2} />;
+    case 'flag':
+      return <Path {...p} d="M5 21V4m0 0h11l-2 4 2 4H5" />;
     case 'pencil':
       return <Path {...p} d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" />;
     case 'star':

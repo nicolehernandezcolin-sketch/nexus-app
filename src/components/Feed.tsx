@@ -9,6 +9,7 @@ import { colorFor, firstNameOf, initialsOf, timeAgo } from '../lib/format';
 import { useDemo } from '../state/DemoState';
 import { colors } from '../theme';
 import { Icon } from './Icon';
+import { SafetyMenu } from './Safety';
 import { Avatar, Button, Card, Pill, Tap, text } from './ui';
 
 const ctaFor = { 'Looking for': 'I’m interested', 'New work': 'Collaborate', 'Crew call': 'Apply' } as const;
@@ -79,6 +80,11 @@ export function LivePostCard({ item, onChanged, showPin }: { item: FeedItem; onC
         </View>
         <Pill label={p.kind} bg={kind.bg} fg={kind.fg} />
       </Tap>
+      {!mine ? (
+        <View style={styles.menu}>
+          <SafetyMenu target={{ type: 'post', id: p.id }} person={{ id: author.id, name: author.name }} onBlocked={onChanged} />
+        </View>
+      ) : null}
       <Text style={text.body}>{p.body}</Text>
       {item.imageUrl ? <Image source={{ uri: item.imageUrl }} accessibilityLabel={`Photo from ${author.name}`} style={styles.photo} resizeMode="cover" /> : null}
       {mine ? (
@@ -111,7 +117,8 @@ export function LivePostCard({ item, onChanged, showPin }: { item: FeedItem; onC
 
 const styles = StyleSheet.create({
   card: { padding: 16, gap: 12 },
-  author: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  author: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingRight: 30 },
+  menu: { position: 'absolute', top: 12, right: 12 },
   photo: { width: '100%', height: 220, borderRadius: 16, backgroundColor: colors.stone },
   actions: { flexDirection: 'row', gap: 8 },
 });

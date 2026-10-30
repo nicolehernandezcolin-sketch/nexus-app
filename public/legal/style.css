@@ -1,0 +1,16 @@
+:root { --forest: #3E4A26; --ink: #1F201C; --cream: #F2EEE4; --paper: #FBF9F3; --muted: #4B4E42; --lime: #C5F37C; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cream); color: var(--ink); font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+header { background: var(--forest); color: var(--cream); padding: 20px 16px; }
+header a { color: var(--lime); font-weight: 800; letter-spacing: .5px; text-decoration: none; font-size: 22px; }
+nav { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+nav a { color: var(--cream); font-size: 15px; font-weight: 500; letter-spacing: 0; text-decoration: underline; }
+main { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 32px; line-height: 1.15; margin: 0 0 4px; }
+h2 { font-size: 22px; margin: 36px 0 8px; color: var(--forest); }
+h3 { font-size: 18px; margin: 24px 0 4px; }
+p.updated { color: var(--muted); margin-top: 0; }
+a { color: var(--forest); }
+a:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+.box { background: var(--paper); border-radius: 16px; padding: 16px 18px; margin: 16px 0; }
+li { margin: 4px 0; }

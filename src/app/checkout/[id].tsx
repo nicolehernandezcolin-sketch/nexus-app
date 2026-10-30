@@ -142,7 +142,7 @@ function LiveCheckout({ id, tierId, qty }: { id: string; tierId?: string; qty?: 
   const steps = [
     { title: 'Signed-in member', detail: me?.name || 'Your account' },
     { title: 'Within the limit', detail: `${owned + quantity} of ${TICKET_LIMIT} tickets for this show, checked on our server` },
-    { title: 'Names on tickets', detail: quantity > 1 ? `Yours now, name your ${quantity - 1} guest${quantity > 2 ? 's' : ''} before the show` : 'Issued to you' },
+    { title: 'Your tickets', detail: quantity > 1 ? `Each of the ${quantity} has its own door code, so guests can arrive separately` : 'Issued to you with its own door code' },
     { title: 'Secure payment', detail: 'Card details go straight to Stripe, never to Nexus' },
   ];
 
@@ -180,6 +180,9 @@ function LiveCheckout({ id, tierId, qty }: { id: string; tierId?: string; qty?: 
           <Icon name="lock" size={16} color={colors.forest} />
           <Text style={[text.small, { flex: 1 }]}>You’ll pay on Stripe’s secure page with Apple Pay, Google Pay or a card, then come straight back.</Text>
         </View>
+        <Text style={[text.small, { textAlign: 'center' }]}>
+          Tickets are refunded if the event is cancelled. See the ticket terms in Settings.
+        </Text>
         <Button
           variant="big"
           label={busy ? 'Opening Stripe…' : ready ? `Pay ${money(total)}` : 'Checking…'}

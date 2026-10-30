@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    height: 48,
+    minHeight: 48,
     paddingHorizontal: 16,
     backgroundColor: colors.paper,
     borderWidth: 1.5,
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, fontFamily: fonts.body400, fontSize: 15, color: colors.ink, outlineStyle: 'none' } as object,
   matchToggle: {
-    height: 40,
+    minHeight: 44,
     paddingHorizontal: 14,
     borderRadius: 999,
     borderWidth: 1.5,
