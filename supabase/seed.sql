@@ -10,6 +10,11 @@ begin
   if host is null then
     raise exception 'Sign up in the app first so there is a profile to attach this to.';
   end if;
+  -- Safe to run again: skip if your work is already loaded.
+  if exists (select 1 from public.work_modules wm where wm.owner = host) then
+    raise notice 'Already loaded. Nothing to do.';
+    return;
+  end if;
 
   update public.profiles set
     name = case when name = '' then 'Nicole Hernandez Colin' else name end,

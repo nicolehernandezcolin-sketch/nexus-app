@@ -72,13 +72,14 @@ Members can read their own orders and tickets but can't create or change them. T
    npx supabase link --project-ref YOUR_PROJECT_REF
    npx supabase functions deploy create-checkout
    npx supabase functions deploy stripe-webhook --no-verify-jwt
+   npx supabase functions deploy delete-account
    ```
 
    `--no-verify-jwt` is only for the webhook: Stripe signs its calls instead of signing in.
 3. In Stripe, open **Developers → API keys** and copy the **Secret key** (`sk_test_…`). Set it, plus where buyers return after paying:
 
    ```bash
-   npx supabase secrets set STRIPE_SECRET_KEY=sk_test_... ALLOWED_RETURN_URLS=https://nicolehernandezcolin-sketch.github.io/nexus-app/tickets,nexus://tickets,http://localhost:8081/tickets
+   npx supabase secrets set STRIPE_SECRET_KEY=sk_test_... ALLOWED_RETURN_URLS=https://nicolehernandezcolin-sketch.github.io/nexus-app/tickets,https://nicolehernandezcolin-sketch.github.io/nexus-app/stripe-return.html,http://localhost:8081/tickets
    ```
 
 4. In Stripe, open **Developers → Webhooks → Add endpoint**:

@@ -7,8 +7,11 @@ import { appUrl } from './appUrl';
 
 /** Where Stripe sends people after paying. These must be listed in ALLOWED_RETURN_URLS on the server. */
 export function ticketsReturnUrl() {
-  return appUrl('/tickets');
+  // Phones go through a small web page that opens the app, since Stripe returns to web addresses.
+  return Platform.OS === 'web' ? appUrl('/tickets') : `${SITE}/stripe-return.html`;
 }
+
+const SITE = 'https://nicolehernandezcolin-sketch.github.io/nexus-app';
 
 export async function payWithStripe(eventId: string, tierId: string, quantity: number) {
   const returnTo = ticketsReturnUrl();
@@ -18,6 +21,8 @@ export async function payWithStripe(eventId: string, tierId: string, quantity: n
     window.location.assign(url);
     return;
   }
-  await WebBrowser.openAuthSessionAsync(url, returnTo);
-  router.replace({ pathname: '/tickets', params: { order: orderId } });
+  // The sheet closes when the return page hands off to nexus://tickets.
+  const result = await WebBrowser.openAuthSessionAsync(url, appUrl('/tickets'));
+  const cancelled = result.type === 'success' && result.url.includes('cancelled=1');
+  router.replace({ pathname: '/tickets', params: cancelled ? { order: orderId, cancelled: '1' } : { order: orderId } });
 }
