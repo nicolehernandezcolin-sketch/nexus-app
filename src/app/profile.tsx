@@ -14,14 +14,14 @@ import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Profile() {
-  const { showToast, profileTab } = useDemo();
+  const { showToast, profileTab, header } = useDemo();
   const [customizing, setCustomizing] = useState(false);
   const { live, me } = useAuth();
   if (live) return me ? <LiveProfile /> : null;
   const hosting = profile.hosting.map((id) => events.find((e) => e.id === id)).filter((e) => !!e);
 
   return (
-    <Screen nav>
+    <Screen nav cover={header.cover}>
       <View>
         <CoverBanner />
         <View style={styles.coverActions}>

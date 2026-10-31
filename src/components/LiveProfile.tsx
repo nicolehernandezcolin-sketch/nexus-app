@@ -20,7 +20,7 @@ import { Button, Card, Pill, SectionTitle, Tap, text } from './ui';
 
 export function LiveProfile() {
   const { me } = useAuth();
-  const { profileTab, setHeader } = useDemo();
+  const { profileTab, header, setHeader } = useDemo();
   const [customizing, setCustomizing] = useState(false);
   const id = me!.id;
 
@@ -73,7 +73,7 @@ export function LiveProfile() {
   if (!me) return null;
 
   return (
-    <Screen nav>
+    <Screen nav cover={header.cover}>
       <View>
         <CoverBanner />
         <View style={styles.coverActions}>

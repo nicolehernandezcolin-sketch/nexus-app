@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, ScrollViewProps, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDemo } from '../state/DemoState';
-import { Glow, useFingerGlow } from './Glow';
+import { Glow, GlowMood, useFingerGlow } from './Glow';
 import { colors, fonts } from '../theme';
 import { Icon, IconName } from './Icon';
 import { text } from './ui';
@@ -41,6 +41,16 @@ function BottomNav() {
   );
 }
 
+/** Which light a screen gets, from its route. */
+function moodFor(path: string): GlowMood {
+  const section = path.split('/')[1] ?? '';
+  if (section === 'discover') return 'discover';
+  if (['events', 'event', 'tickets', 'checkout', 'door'].includes(section)) return 'events';
+  if (['profile', 'person'].includes(section)) return 'profile';
+  if (section === 'timeline') return 'timeline';
+  return 'quiet';
+}
+
 /** A full screen: optional fixed header, a scrolling body, and the tab bar when `nav` is set. */
 export function Screen({
   header,
@@ -49,6 +59,7 @@ export function Screen({
   footer,
   contentStyle,
   overlay,
+  cover,
 }: {
   header?: ReactNode;
   children: ReactNode;
@@ -57,13 +68,16 @@ export function Screen({
   contentStyle?: ScrollViewProps['contentContainerStyle'];
   /** Floats above the scrolling content, e.g. a post button. */
   overlay?: ReactNode;
+  /** On a profile: its cover id, so the background glow matches it. */
+  cover?: string;
 }) {
   const insets = useSafeAreaInsets();
+  const path = usePathname();
   const scrollY = useRef(new Animated.Value(0)).current;
   const finger = useFingerGlow();
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]} {...finger.handlers}>
-      <Glow scrollY={scrollY} />
+      <Glow scrollY={scrollY} mood={moodFor(path)} cover={cover} />
       {finger.light}
       {header}
       <View style={{ flex: 1 }}>

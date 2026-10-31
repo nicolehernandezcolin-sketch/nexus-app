@@ -71,7 +71,7 @@ function LivePerson({ id }: { id: string }) {
   };
 
   return (
-    <Screen header={<BackHeader label="Back" fallback="/discover" />} contentStyle={{ paddingBottom: 32 + insets.bottom }}>
+    <Screen header={<BackHeader label="Back" fallback="/discover" />} cover={p.header?.cover} contentStyle={{ paddingBottom: 32 + insets.bottom }}>
       <CoverBanner style={p.header} height={96} />
       <View style={styles.hero}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -166,7 +166,7 @@ function DemoPerson({ id }: { id: string }) {
   const first = person.name.split(' ')[0];
 
   return (
-    <Screen header={<BackHeader label="Back" fallback={person.artist ? '/discover' : '/profile'} />} contentStyle={{ paddingBottom: 32 + insets.bottom }}>
+    <Screen header={<BackHeader label="Back" fallback={person.artist ? '/discover' : '/profile'} />} cover={person.cover?.cover} contentStyle={{ paddingBottom: 32 + insets.bottom }}>
       {person.cover ? <CoverBanner style={person.cover} height={96} /> : null}
       <View style={styles.hero}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
