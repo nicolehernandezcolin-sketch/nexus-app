@@ -1,6 +1,6 @@
 // Everything the app reads from and writes to Supabase. Screens call these in live mode.
 import { useCallback, useEffect, useState } from 'react';
-import { PostKind } from '../data/content';
+import { PostKind, Prompt } from '../data/content';
 import { db } from './supabase';
 
 /* ---------- Row types (mirror supabase/migrations) ---------- */
@@ -19,6 +19,7 @@ export type ProfileRow = {
   projects: string[];
   avatar_path: string | null;
   header: HeaderRow;
+  prompts: Prompt[];
   suggest: boolean;
   discoverable: boolean;
   personalize: boolean;
@@ -37,6 +38,7 @@ export type PostRow = {
   image_path: string | null;
   pinned: boolean;
   group_id: string | null;
+  raw: boolean;
   created_at: string;
 };
 
@@ -56,6 +58,8 @@ export type EventRow = {
   sale_kind: 'tickets' | 'free' | 'drawing';
   tiers: Tier[];
   featured: boolean;
+  lat: number | null;
+  lng: number | null;
 };
 
 export type WorkModuleRow = { id: string; owner: string; title: string; blurb: string; position: number; hidden: boolean };
@@ -219,11 +223,11 @@ export async function fetchPostsBy(userId: string) {
 }
 
 /** Posts to everyone on Nexus, or privately into a group when `groupId` is set. */
-export async function createPost(kind: PostKind, body: string, imageUri?: string, groupId?: string) {
+export async function createPost(kind: PostKind, body: string, imageUri?: string, groupId?: string, raw = false) {
   const author = await myId();
   const image_path = imageUri ? await uploadImage(groupId ? 'private' : 'media', imageUri, groupId) : null;
   return check(
-    await db().from('posts').insert({ author, kind, body, image_path, group_id: groupId ?? null }).select('*').single(),
+    await db().from('posts').insert({ author, kind, body, image_path, group_id: groupId ?? null, raw }).select('*').single(),
   ) as PostRow;
 }
 
@@ -414,6 +418,9 @@ export type InboxRow = {
   last_body: string | null;
   last_at: string | null;
   last_from_me: boolean | null;
+  /** False for both means a message request from someone you don't follow. */
+  i_follow: boolean;
+  i_wrote: boolean;
 };
 
 export type MessageRow = { id: string; conversation_id: string; sender: string; body: string; image_path: string | null; created_at: string };

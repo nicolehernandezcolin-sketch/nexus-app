@@ -14,9 +14,12 @@ export type Art = {
   plain?: boolean;
 };
 
+// What you make. Discover filters by these, so people can search by medium.
 export const roles = [
+  'Singer',
   'Musician',
   'Producer',
+  'DJ',
   'Filmmaker',
   'Photographer',
   'Visual artist',
@@ -45,7 +48,7 @@ export const welcomeOptions: { id: OptionId; title: string; detail: string }[] =
   },
 ];
 
-export type PostKind = 'Looking for' | 'New work' | 'Crew call';
+export type PostKind = 'Looking for' | 'New work' | 'Crew call' | 'Show';
 
 export type Post = {
   id: string;
@@ -59,12 +62,15 @@ export type Post = {
   text: string;
   art?: Art;
   cta: string;
+  /** Unedited work: a phone demo, a rehearsal, a sketch. */
+  raw?: boolean;
 };
 
 export const postKindColors: Record<PostKind, { bg: string; fg: string }> = {
   'Looking for': { bg: colors.lime, fg: colors.ink },
   'New work': { bg: colors.stone, fg: colors.forest },
   'Crew call': { bg: colors.ink, fg: colors.lime },
+  Show: { bg: colors.forest, fg: colors.lime },
 };
 
 export const posts: Post[] = [
@@ -79,6 +85,32 @@ export const posts: Post[] = [
     kind: 'Looking for',
     text: 'Looking for a drummer and keys player for Sunday jam sessions in North Park. Neo-soul, funk, some Latin grooves. All levels welcome if you can hold a pocket.',
     cta: 'I’m interested',
+  },
+  {
+    id: 'sofia-raw',
+    initials: 'SR',
+    avatar: colors.olive,
+    name: 'Sofia Ramos',
+    firstName: 'Sofia',
+    role: 'Singer',
+    time: '2h',
+    kind: 'New work',
+    raw: true,
+    text: 'Voice memo from the car, first take, no edits. The bridge isn’t finished. Tell me where it should go.',
+    art: { bg: colors.lime, fg: colors.ink, height: 110, label: 'Voice memo' },
+    cta: 'Collaborate',
+  },
+  {
+    id: 'jordan-show',
+    initials: 'JE',
+    avatar: colors.ink,
+    name: 'Jordan Ellis',
+    firstName: 'Jordan',
+    role: 'Drummer',
+    time: '2h',
+    kind: 'Show',
+    text: 'Backyard show this Saturday in Golden Hill. Three bands, $10 at the gate, all of it goes to the bands. Bring a chair.',
+    cta: 'I’m going',
   },
   {
     id: 'marisol',
@@ -121,9 +153,6 @@ export const posts: Post[] = [
   },
 ];
 
-export const disciplines = ['All', 'Music', 'Film', 'Visual', 'Movement'] as const;
-export type Discipline = (typeof disciplines)[number];
-
 // Talent match vocabulary: what someone can bring, and what kind of project it's for.
 export const skills = ['Vocals', 'Drums', 'Bass', 'Film crew', 'Editing', 'Visual art', 'Dance', 'Choreography', 'Sound'] as const;
 export const projectTypes = ['Music video', 'Live show', 'Album art', 'Short film', 'Stage show'] as const;
@@ -133,7 +162,8 @@ export type ProjectType = (typeof projectTypes)[number];
 export type Creator = {
   name: string;
   role: string;
-  discipline: Exclude<Discipline, 'All'>;
+  /** From `roles`, for searching by medium. */
+  mediums: string[];
   openTo: string;
   art: Art;
   skills: Skill[];
@@ -149,19 +179,19 @@ export type Creator = {
 
 export const creators: Creator[] = [
   // Nexus artists, with profile pages (see `people` below).
-  { id: 'katriz-trinidad', name: 'Katriz Trinidad', role: 'Singer', discipline: 'Music', openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'KT', plain: true }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'San Diego', sharedAt: [], mutuals: [] },
-  { id: 'jennifer-hernandez', name: 'Jennifer Hernandez', role: 'Dancer', discipline: 'Movement', openTo: 'Open to stage work', art: { bg: colors.lime, fg: colors.ink, height: 160, label: 'JH', plain: true }, skills: ['Dance'], projects: ['Stage show', 'Music video'], city: 'San Diego', sharedAt: [], mutuals: [] },
-  { id: 'jessica-tibbits', name: 'Jessica Tibbits', role: 'Dancer', discipline: 'Movement', openTo: 'Open to music videos', art: { bg: colors.ink, fg: colors.lime, height: 170, label: 'JT', plain: true }, skills: ['Dance'], projects: ['Music video', 'Stage show'], city: 'San Diego', sharedAt: [], mutuals: [] },
-  { id: 'nona', name: 'Nona', role: 'Musician', discipline: 'Music', openTo: 'Open to live shows', art: { bg: colors.olive, fg: colors.cream, height: 150, label: 'N', plain: true }, skills: [], projects: ['Live show'], city: 'San Diego', sharedAt: [], mutuals: [] },
-  { name: 'Sofia Ramos', role: 'Vocalist · Chula Vista', discipline: 'Music', openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'Live set' }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'Chula Vista', sharedAt: ['Nexus Film Festival', 'UC Series at UCSD'], mutuals: ['Marisol Vega'] },
-  { name: 'Kai Nakamura', role: 'Cinematographer', discipline: 'Film', openTo: 'Open to music videos', art: { bg: colors.sand, fg: colors.forest, height: 130, label: 'Reel still' }, skills: ['Film crew'], projects: ['Music video', 'Short film'], city: 'San Diego', sharedAt: ['Nexus Film Festival', 'Latin Jazz Night', 'Nex Up'], mutuals: ['Lena Park', 'Ruben Ortiz'] },
-  { name: 'Dani Flores', role: 'Muralist', discipline: 'Visual', openTo: 'Open to commissions', art: { bg: colors.lime, fg: colors.ink, height: 220, label: 'Mural' }, skills: ['Visual art'], projects: ['Album art', 'Stage show'], city: 'San Diego', sharedAt: [], mutuals: [] },
-  { name: 'Jordan Ellis', role: 'Drummer', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.ink, fg: colors.lime, height: 150, label: 'Studio photo' }, skills: ['Drums'], projects: ['Live show'], city: 'San Diego', sharedAt: ['Nex Up', 'Latin Jazz Night'], mutuals: ['Andre Okafor'] },
-  { name: 'Ana Lucero', role: 'Choreographer · Tijuana', discipline: 'Movement', openTo: 'Open to stage work', art: { bg: colors.olive, fg: colors.cream, height: 170, label: 'Rehearsal' }, skills: ['Choreography'], projects: ['Stage show', 'Music video'], city: 'Tijuana', sharedAt: ['Nexus Film Festival'], mutuals: [] },
-  { name: 'Ruben Ortiz', role: 'Editor and colorist', discipline: 'Film', openTo: 'Open to short films', art: { bg: colors.stone, fg: colors.forest, height: 140, label: 'Color grade' }, skills: ['Editing'], projects: ['Short film', 'Music video'], city: 'San Diego', sharedAt: ['Nexus Film Festival'], mutuals: ['Kai Nakamura'] },
-  { name: 'Mia Chen', role: 'Illustrator · Los Angeles', discipline: 'Visual', openTo: 'Open to album art', art: { bg: colors.forest, fg: colors.cream, height: 180, label: 'Illustration' }, skills: ['Visual art'], projects: ['Album art'], city: 'Los Angeles', sharedAt: [], mutuals: [] },
-  { name: 'Luis Herrera', role: 'Sound engineer', discipline: 'Music', openTo: 'Open to live shows', art: { bg: colors.sand, fg: colors.ink, height: 130, label: 'Board photo' }, skills: ['Sound'], projects: ['Live show'], city: 'San Diego', sharedAt: ['Latin Jazz Night'], mutuals: [] },
-  { name: 'Andre Okafor', role: 'Bassist · North Park', discipline: 'Music', openTo: 'Open to bands', art: { bg: colors.olive, fg: colors.lime, height: 150, label: 'Jam session' }, skills: ['Bass'], projects: ['Live show', 'Music video'], city: 'San Diego', sharedAt: ['Latin Jazz Night', 'Nex Up', 'UC Series at UCSD'], mutuals: ['Jordan Ellis'] },
+  { id: 'katriz-trinidad', name: 'Katriz Trinidad', role: 'Singer', mediums: ['Singer'], openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'KT', plain: true }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { id: 'jennifer-hernandez', name: 'Jennifer Hernandez', role: 'Dancer', mediums: ['Dancer'], openTo: 'Open to stage work', art: { bg: colors.lime, fg: colors.ink, height: 160, label: 'JH', plain: true }, skills: ['Dance'], projects: ['Stage show', 'Music video'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { id: 'jessica-tibbits', name: 'Jessica Tibbits', role: 'Dancer', mediums: ['Dancer'], openTo: 'Open to music videos', art: { bg: colors.ink, fg: colors.lime, height: 170, label: 'JT', plain: true }, skills: ['Dance'], projects: ['Music video', 'Stage show'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { id: 'nona', name: 'Nona', role: 'Musician', mediums: ['Musician'], openTo: 'Open to live shows', art: { bg: colors.olive, fg: colors.cream, height: 150, label: 'N', plain: true }, skills: [], projects: ['Live show'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { id: 'sofia-ramos', name: 'Sofia Ramos', role: 'Vocalist · Chula Vista', mediums: ['Singer'], openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'Live set' }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'Chula Vista', sharedAt: ['Nexus Film Festival', 'UC Series at UCSD'], mutuals: ['Marisol Vega'] },
+  { id: 'kai-nakamura', name: 'Kai Nakamura', role: 'Cinematographer', mediums: ['Filmmaker'], openTo: 'Open to music videos', art: { bg: colors.sand, fg: colors.forest, height: 130, label: 'Reel still' }, skills: ['Film crew'], projects: ['Music video', 'Short film'], city: 'San Diego', sharedAt: ['Nexus Film Festival', 'Latin Jazz Night', 'Nex Up'], mutuals: ['Lena Park', 'Ruben Ortiz'] },
+  { id: 'dani-flores', name: 'Dani Flores', role: 'Muralist', mediums: ['Visual artist'], openTo: 'Open to commissions', art: { bg: colors.lime, fg: colors.ink, height: 220, label: 'Mural' }, skills: ['Visual art'], projects: ['Album art', 'Stage show'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { id: 'jordan-ellis', name: 'Jordan Ellis', role: 'Drummer', mediums: ['Musician'], openTo: 'Open to bands', art: { bg: colors.ink, fg: colors.lime, height: 150, label: 'Studio photo' }, skills: ['Drums'], projects: ['Live show'], city: 'San Diego', sharedAt: ['Nex Up', 'Latin Jazz Night'], mutuals: ['Andre Okafor'] },
+  { id: 'ana-lucero', name: 'Ana Lucero', role: 'Choreographer · Tijuana', mediums: ['Dancer'], openTo: 'Open to stage work', art: { bg: colors.olive, fg: colors.cream, height: 170, label: 'Rehearsal' }, skills: ['Choreography'], projects: ['Stage show', 'Music video'], city: 'Tijuana', sharedAt: ['Nexus Film Festival'], mutuals: [] },
+  { id: 'ruben-ortiz', name: 'Ruben Ortiz', role: 'Editor and colorist', mediums: ['Filmmaker'], openTo: 'Open to short films', art: { bg: colors.stone, fg: colors.forest, height: 140, label: 'Color grade' }, skills: ['Editing'], projects: ['Short film', 'Music video'], city: 'San Diego', sharedAt: ['Nexus Film Festival'], mutuals: ['Kai Nakamura'] },
+  { id: 'mia-chen', name: 'Mia Chen', role: 'Illustrator · Los Angeles', mediums: ['Visual artist', 'Designer'], openTo: 'Open to album art', art: { bg: colors.forest, fg: colors.cream, height: 180, label: 'Illustration' }, skills: ['Visual art'], projects: ['Album art'], city: 'Los Angeles', sharedAt: [], mutuals: [] },
+  { id: 'luis-herrera', name: 'Luis Herrera', role: 'Sound engineer', mediums: ['Producer'], openTo: 'Open to live shows', art: { bg: colors.sand, fg: colors.ink, height: 130, label: 'Board photo' }, skills: ['Sound'], projects: ['Live show'], city: 'San Diego', sharedAt: ['Latin Jazz Night'], mutuals: [] },
+  { id: 'andre-okafor', name: 'Andre Okafor', role: 'Bassist · North Park', mediums: ['Musician'], openTo: 'Open to bands', art: { bg: colors.olive, fg: colors.lime, height: 150, label: 'Jam session' }, skills: ['Bass'], projects: ['Live show', 'Music video'], city: 'San Diego', sharedAt: ['Latin Jazz Night', 'Nex Up', 'UC Series at UCSD'], mutuals: ['Jordan Ellis'] },
 ];
 
 /* ---------- Events and tickets ---------- */
@@ -190,6 +220,9 @@ export type NexusEvent = {
   sale: Sale;
   friends: string[];
   friendsText: string;
+  /** Where it is, for the shows map. */
+  lat?: number;
+  lng?: number;
 };
 
 // Ticket prices are sample prices for the demo.
@@ -233,6 +266,8 @@ export const events: NexusEvent[] = [
     },
     friends: ['TR', 'KN', 'SR'],
     friendsText: 'Tomás, Kai + 1 you follow',
+    lat: 32.8801,
+    lng: -117.234,
   },
   {
     id: 'latin-jazz',
@@ -502,10 +537,27 @@ export type Person = {
   avatar: string;
   photo?: ImageSourcePropType;
   bio?: string;
+  link?: { label: string; url: string };
   /** An artist on Nexus rather than a member of the Nexus team. */
   artist?: boolean;
-  link?: { label: string; url: string };
+  /** Profile cover, as on your own profile's Customize panel. */
+  cover?: { cover: string; pattern: 'none' | 'waves' | 'grid' | 'dots' };
+  prompts?: Prompt[];
 };
+
+/** A short answer on a profile, so people get a feel for someone before reaching out. */
+export type Prompt = { q: string; a: string };
+
+export const promptQuestions = [
+  'Currently making…',
+  'I’m looking for someone who…',
+  'The show that changed me…',
+  'My process looks like…',
+  'A dream collab…',
+  'You’ll find me at…',
+  'Ask me about…',
+  'My work in three words…',
+];
 
 // The Nexus team, from the About page of the Nexus website. 'nicole' is the profile owner.
 export const people: Person[] = [
@@ -531,6 +583,70 @@ export const people: Person[] = [
   { id: 'jennifer-hernandez', name: 'Jennifer Hernandez', initials: 'JH', role: 'Dancer', avatar: colors.olive, artist: true },
   { id: 'jessica-tibbits', name: 'Jessica Tibbits', initials: 'JT', role: 'Dancer', avatar: colors.ink, artist: true },
   { id: 'nona', name: 'Nona', initials: 'N', role: 'Musician', avatar: colors.forest, artist: true },
+  // Sample creators for the demo.
+  {
+    id: 'sofia-ramos',
+    name: 'Sofia Ramos',
+    initials: 'SR',
+    role: 'Singer · Chula Vista',
+    avatar: colors.olive,
+    artist: true,
+    cover: { cover: 'lime', pattern: 'dots' },
+    bio: 'Bilingual songs about home, love and the 805 bus.',
+    prompts: [
+      { q: 'Currently making…', a: 'A five-song EP recorded in my closet. One mic, one ukulele, a lot of blankets.' },
+      { q: 'I’m looking for someone who…', a: 'Plays live drums and doesn’t mind a 2am voice memo.' },
+      { q: 'You’ll find me at…', a: 'Latin Jazz Night, front left, singing along.' },
+    ],
+  },
+  {
+    id: 'kai-nakamura',
+    name: 'Kai Nakamura',
+    initials: 'KN',
+    role: 'Cinematographer',
+    avatar: colors.forest,
+    artist: true,
+    cover: { cover: 'ink', pattern: 'grid' },
+    prompts: [
+      { q: 'My process looks like…', a: 'Walk the location at golden hour twice before I bring a camera.' },
+      { q: 'A dream collab…', a: 'A music video shot entirely in one take through a laundromat.' },
+    ],
+  },
+  { id: 'dani-flores', name: 'Dani Flores', initials: 'DF', role: 'Muralist', avatar: colors.forest, artist: true, cover: { cover: 'sand', pattern: 'waves' } },
+  {
+    id: 'jordan-ellis',
+    name: 'Jordan Ellis',
+    initials: 'JE',
+    role: 'Drummer',
+    avatar: colors.ink,
+    artist: true,
+    prompts: [{ q: 'Ask me about…', a: 'Why every band needs a drummer who can also drive the van.' }],
+  },
+  {
+    id: 'ana-lucero',
+    name: 'Ana Lucero',
+    initials: 'AL',
+    role: 'Choreographer · Tijuana',
+    avatar: colors.olive,
+    artist: true,
+    cover: { cover: 'olive', pattern: 'waves' },
+    prompts: [
+      { q: 'The show that changed me…', a: 'A street cypher in Zona Centro where nobody was on a stage and everybody was.' },
+      { q: 'My work in three words…', a: 'Sweaty, tender, loud.' },
+    ],
+  },
+  { id: 'ruben-ortiz', name: 'Ruben Ortiz', initials: 'RO', role: 'Editor and colorist', avatar: colors.ink, artist: true },
+  { id: 'mia-chen', name: 'Mia Chen', initials: 'MC', role: 'Illustrator · Los Angeles', avatar: colors.forest, artist: true, cover: { cover: 'forest', pattern: 'dots' } },
+  { id: 'luis-herrera', name: 'Luis Herrera', initials: 'LH', role: 'Sound engineer', avatar: colors.olive, artist: true },
+  {
+    id: 'andre-okafor',
+    name: 'Andre Okafor',
+    initials: 'AO',
+    role: 'Bassist · North Park',
+    avatar: colors.olive,
+    artist: true,
+    prompts: [{ q: 'I’m looking for someone who…', a: 'Wants to start a Sunday afternoon band that only plays covers we can’t agree on.' }],
+  },
 ];
 
 export type TeamMember = { person: string; part: string };
@@ -752,7 +868,15 @@ export const demoGroupPosts: { group: string; post: Post }[] = [
 ];
 
 export type DemoMessage = { from: 'me' | 'them'; body: string; time: string };
-export type DemoConversation = { id: string; name: string; initials: string; avatar: string; messages: DemoMessage[] };
+export type DemoConversation = {
+  id: string;
+  name: string;
+  initials: string;
+  avatar: string;
+  messages: DemoMessage[];
+  /** Someone you don't follow who wrote first: it waits in Requests. */
+  request?: boolean;
+};
 
 export const demoConversations: DemoConversation[] = [
   {
@@ -771,5 +895,21 @@ export const demoConversations: DemoConversation[] = [
     initials: 'SR',
     avatar: colors.olive,
     messages: [{ from: 'them', body: 'I’d love to sing on something for Latin Jazz Night. Can I send a demo?', time: '1d' }],
+  },
+  {
+    id: 'promo',
+    name: 'GrowthWave Promo',
+    initials: 'GP',
+    avatar: colors.ink,
+    request: true,
+    messages: [{ from: 'them', body: 'Love your page!! 🔥 We can get your music 10k streams guaranteed. Only $49, DM us or pay here: bit.ly/gw-promo', time: '3h' }],
+  },
+  {
+    id: 'request-mia',
+    name: 'Mia Chen',
+    initials: 'MC',
+    avatar: colors.forest,
+    request: true,
+    messages: [{ from: 'them', body: 'Hi! I illustrate album covers and saw your Nex Up post. Would you be open to a cover for the next single?', time: '5h' }],
   },
 ];

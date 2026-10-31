@@ -2,12 +2,12 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { PageHeader, Screen } from '../components/Chrome';
-import { LivePostCard } from '../components/Feed';
+import { LivePostCard, PostTags } from '../components/Feed';
 import { GroupsTab } from '../components/Groups';
 import { Icon } from '../components/Icon';
 import { MeAvatar } from '../components/Me';
-import { ArtBlock, Avatar, Button, Card, Pill, Rise, Tap, text } from '../components/ui';
-import { Post, postKindColors, posts, profile } from '../data/content';
+import { ArtBlock, Avatar, Button, Card, Rise, Tap, text } from '../components/ui';
+import { Post, posts, profile } from '../data/content';
 import { fetchTimeline, useLoad } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useDemo, UserPost } from '../state/DemoState';
@@ -97,7 +97,6 @@ export default function Timeline() {
 
 function PostCard({ post: p }: { post: Post }) {
   const { saved, toggleSaved, showToast } = useDemo();
-  const kind = postKindColors[p.kind];
   const isSaved = !!saved[p.id];
   return (
     <Card style={styles.card}>
@@ -109,17 +108,23 @@ function PostCard({ post: p }: { post: Post }) {
             {p.role} · {p.time}
           </Text>
         </View>
-        <Pill label={p.kind} bg={kind.bg} fg={kind.fg} />
+        <PostTags kind={p.kind} raw={p.raw} />
       </View>
       <Text style={text.body}>{p.text}</Text>
       {p.art ? <ArtBlock art={p.art} /> : null}
       <View style={styles.actions}>
-        <Button
-          label={p.cta}
-          style={{ flex: 1 }}
-          onPress={() => showToast(`Request sent to **${p.firstName}**. They’ll see it next time they open Nexus.`)}
-        />
-        <Button variant="ghost" label={isSaved ? 'Saved' : 'Save'} selected={isSaved} onPress={() => toggleSaved(p.id)} />
+        {p.kind === 'Show' ? (
+          <Button label={isSaved ? 'Saved' : 'Save the date'} selected={isSaved} style={{ flex: 1 }} onPress={() => toggleSaved(p.id)} />
+        ) : (
+          <>
+            <Button
+              label={p.cta}
+              style={{ flex: 1 }}
+              onPress={() => showToast(`Request sent to **${p.firstName}**. They’ll see it next time they open Nexus.`)}
+            />
+            <Button variant="ghost" label={isSaved ? 'Saved' : 'Save'} selected={isSaved} onPress={() => toggleSaved(p.id)} />
+          </>
+        )}
         <Button
           variant="ghost"
           accessibilityLabel={`Message ${p.name}`}
@@ -165,7 +170,6 @@ function LiveFeed() {
 
 function MyPost({ post: p }: { post: UserPost }) {
   const { setProfileTab } = useDemo();
-  const kind = postKindColors[p.kind];
   return (
     <Card style={[styles.card, { borderWidth: 1.5, borderColor: colors.olive }]}>
       <View style={styles.author}>
@@ -174,7 +178,7 @@ function MyPost({ post: p }: { post: UserPost }) {
           <Text style={text.strong}>{profile.name}</Text>
           <Text style={text.small}>You · Just now</Text>
         </View>
-        <Pill label={p.kind} bg={kind.bg} fg={kind.fg} />
+        <PostTags kind={p.kind} raw={p.raw} />
       </View>
       <Text style={text.body}>{p.text}</Text>
       {p.image ? <Image source={{ uri: p.image }} accessibilityLabel="Your photo" style={styles.photo} resizeMode="cover" /> : null}
@@ -200,7 +204,8 @@ function CaughtUp() {
         You’re all caught up.
       </Text>
       <Text style={styles.endText}>
-        That’s everything from the people you follow. No endless scroll here. Go meet someone, make something, or come to a show.
+        That’s everything from the people you follow, in the order it was posted. Every post reaches every follower: no algorithm decides whose music or show gets
+        seen, and nobody can pay to cut the line. Go meet someone, make something, or come to a show.
       </Text>
       <View style={{ gap: 8, alignSelf: 'stretch' }}>
         <Button variant="lime" label="See events this week" onPress={() => router.replace('/events')} />

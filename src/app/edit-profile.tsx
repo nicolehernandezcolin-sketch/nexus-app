@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { MeAvatar } from '../components/Me';
+import { PromptEditor } from '../components/Prompts';
 import { Button, Chip, SectionTitle, Tap, text } from '../components/ui';
 import { projectTypes, roles, skills } from '../data/content';
 import { uploadImage } from '../lib/api';
@@ -29,6 +30,7 @@ export default function EditProfile() {
   const [openTo, setOpenTo] = useState(me?.open_to ?? []);
   const [mySkills, setSkills] = useState(me?.skills ?? []);
   const [myProjects, setProjects] = useState(me?.projects ?? []);
+  const [prompts, setPrompts] = useState(me?.prompts ?? []);
   const [busy, setBusy] = useState(false);
 
   if (!me) return null;
@@ -56,6 +58,7 @@ export default function EditProfile() {
         open_to: openTo,
         skills: mySkills,
         projects: myProjects,
+        prompts: prompts.map((p) => ({ q: p.q, a: p.a.trim() })).filter((p) => p.a),
       });
       showToast('Profile **saved**.');
       if (router.canGoBack()) router.back();
@@ -84,6 +87,8 @@ export default function EditProfile() {
       <Field label="Tagline" value={tagline} onChange={setTagline} max={120} placeholder="Artist · Producer · Founder" />
       <Field label="Location" value={location} onChange={setLocation} max={80} placeholder="San Diego" />
       <Field label="Bio" value={bio} onChange={setBio} max={600} multiline placeholder="What you make, and what you’re looking for." />
+
+      <PromptEditor value={prompts} onChange={setPrompts} />
 
       <ChipGroup title="What you make" options={roles} value={myRoles} onToggle={(v) => setRoles(toggle(myRoles, v))} />
       <ChipGroup title="Open to" options={openToOptions} value={openTo} onToggle={(v) => setOpenTo(toggle(openTo, v))} />

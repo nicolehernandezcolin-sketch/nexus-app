@@ -52,6 +52,13 @@
           "backgroundColor": "#F7EDE4",
           "resizeMode": "contain"
         }
+      ],
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": true,
+          "locationPermission": "Nexus uses your location only to center the shows map near you. It isn't saved or shared."
+        }
       ]
     ],
     "scheme": "nexus",

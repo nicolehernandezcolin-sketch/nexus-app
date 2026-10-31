@@ -1,8 +1,10 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { PageHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
+import { ShowMap } from '../components/ShowMap';
+import { MapShow } from '../components/ShowMap.shared';
 import { Avatar, Pill, Rise, Tap } from '../components/ui';
 import { events, NexusEvent } from '../data/content';
 import { saleLabel } from '../data/fees';
@@ -26,6 +28,9 @@ export default function Events() {
     }, [live]),
   );
   const list: NexusEvent[] = loaded.data ?? (live ? [] : events);
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const onMap: MapShow[] = list.flatMap((e) => (e.lat != null && e.lng != null ? [{ id: e.id, title: e.title, when: e.when, lat: e.lat, lng: e.lng }] : []));
+  const offMap = list.filter((e) => e.lat == null || e.lng == null);
   return (
     <Screen
       nav
@@ -50,11 +55,46 @@ export default function Events() {
       {live && loaded.loading && !loaded.data ? <ActivityIndicator color={colors.forest} style={{ marginVertical: 24 }} /> : null}
       {live && loaded.error ? <Text style={styles.meta}>Couldn’t load events: {loaded.error}</Text> : null}
       {live && loaded.data?.length === 0 ? <Text style={styles.meta}>No events yet.</Text> : null}
-      {list.map((e, i) => (
-        <Rise key={e.id} delay={i * 80}>
-          <EventCard event={e} />
-        </Rise>
-      ))}
+      <View style={styles.views} accessibilityRole="tablist">
+        {(['list', 'map'] as const).map((v) => {
+          const on = view === v;
+          return (
+            <Tap
+              key={v}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              onPress={() => setView(v)}
+              style={[styles.viewBtn, on && { backgroundColor: colors.forest, borderColor: colors.forest }]}
+            >
+              <Icon name={v === 'list' ? 'events' : 'globe'} size={15} color={on ? colors.lime : colors.forest} />
+              <Text style={[styles.viewText, on && { color: colors.lime }]}>{v === 'list' ? 'List' : 'Map of shows'}</Text>
+            </Tap>
+          );
+        })}
+      </View>
+
+      {view === 'map' ? (
+        <>
+          <ShowMap shows={onMap} onOpen={(id) => router.push({ pathname: '/event/[id]', params: { id } })} />
+          <Text style={styles.meta}>
+            {onMap.length
+              ? `${onMap.length} show${onMap.length > 1 ? 's' : ''} on the map around San Diego. Tap a pin to see it.`
+              : 'No shows have a location on the map yet.'}
+          </Text>
+          {offMap.length ? <Text style={styles.offTitle}>Location coming soon</Text> : null}
+          {offMap.map((e, i) => (
+            <Rise key={e.id} delay={i * 80}>
+              <EventCard event={e} />
+            </Rise>
+          ))}
+        </>
+      ) : (
+        list.map((e, i) => (
+          <Rise key={e.id} delay={i * 80}>
+            <EventCard event={e} />
+          </Rise>
+        ))
+      )}
     </Screen>
   );
 }
@@ -138,6 +178,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { fontFamily: fonts.display800, fontSize: 10, color: colors.ink },
+  views: { flexDirection: 'row', gap: 8 },
+  viewBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5, borderColor: colors.line2 },
+  viewText: { fontFamily: fonts.body600, fontSize: 13.5, color: colors.forest },
+  offTitle: { fontFamily: fonts.display700, fontSize: 16, color: colors.ink, marginTop: 4 },
   card: { borderRadius: 22, padding: 16, gap: 14 },
   top: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
   date: { width: 62, height: 64, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 4 },

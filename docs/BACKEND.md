@@ -20,6 +20,10 @@ Nexus runs in two modes from the same code:
 | Events, free RSVPs, fair drawing entries, event teams | Yes |
 | Private groups: invite-only, posts and files for members only | Yes |
 | Private messages, with photos and live updates | Yes |
+| Message requests: strangers wait in Requests, promo and scam messages are flagged | Yes |
+| Profile prompts ("Currently making…") with "Riff on this" replies | Yes |
+| Raw (unedited) posts and Show promos on the timeline | Yes |
+| Map of shows | Events with a `lat` and `lng` set in Supabase get a pin |
 | Paid tickets through Stripe Checkout, named tickets, refunds | Yes, once Stripe is set up (below) |
 | Ticket transfers and face-value resale | Not yet: the buttons say coming next |
 | Adding work items and events from the app | Not yet: add them in Supabase for now |
@@ -31,6 +35,8 @@ Nexus runs in two modes from the same code:
    1. `supabase/migrations/0001_init.sql`
    2. `supabase/migrations/0002_private.sql`
    3. `supabase/migrations/0003_tickets.sql`
+   4. `supabase/migrations/0004_launch.sql`
+   5. `supabase/migrations/0005_feedback.sql`
 3. Open **Project Settings → API** and copy the **Project URL** and the **publishable key** (it starts with `sb_publishable_`; older projects call it the `anon` key). The publishable key is meant to be in the app; the security rules protect the data. Never put the `secret` / `service_role` key in the app.
 4. Copy `.env.example` to `.env.local` and paste both values in.
 5. Open **Authentication → URL Configuration**. Set **Site URL** to `https://nicolehernandezcolin-sketch.github.io/nexus-app/` and add these **Redirect URLs**, so confirmation emails link back to the app:

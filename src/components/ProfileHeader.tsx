@@ -47,8 +47,10 @@ function useCover(id: string): Cover {
 export const COVER_HEIGHT = 128;
 
 /** The cover banner itself. */
-export function CoverBanner({ height = COVER_HEIGHT }: { height?: number }) {
-  const { header } = useDemo();
+export function CoverBanner({ height = COVER_HEIGHT, style }: { height?: number; style?: HeaderStyle }) {
+  const { header: mine } = useDemo();
+  // Someone else's profile passes their header; your own comes from state.
+  const header = style ?? mine;
   const cover = useCover(header.cover);
   const ink = cover.light ? colors.forest : colors.lime;
   return (

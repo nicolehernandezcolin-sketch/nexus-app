@@ -4,7 +4,7 @@ import { ActivityIndicator, Animated, ScrollView, StyleSheet, Text, TextInput, V
 import { PageHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { ArtBlock, Chip, Pill, Rise, Switch, Tap, text } from '../components/ui';
-import { Creator, creators, Discipline, disciplines, ProjectType, projectTypes, Skill, skills } from '../data/content';
+import { Creator, creators, ProjectType, projectTypes, roles, Skill, skills } from '../data/content';
 import { discoverPeople, useLoad } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { colorFor, initialsOf } from '../lib/format';
@@ -55,12 +55,8 @@ function score(c: Creator, m: Match): Scored | null {
   return { creator: c, percent: Math.round((points / possible) * 100), reasons };
 }
 
-const disciplineFor = (roles: string[]): Creator['discipline'] => {
-  if (roles.some((r) => ['Musician', 'Producer'].includes(r))) return 'Music';
-  if (roles.includes('Filmmaker')) return 'Film';
-  if (roles.includes('Dancer')) return 'Movement';
-  return 'Visual';
-};
+// Filter chips: the plural of each medium in `roles`.
+const mediumLabel = (r: string) => (r === 'DJ' ? 'DJs' : `${r}s`);
 
 /** A real member from discover_people(), shaped like the demo's creators. */
 function toCreator(r: Awaited<ReturnType<typeof discoverPeople>>[number]): Creator {
@@ -68,7 +64,7 @@ function toCreator(r: Awaited<ReturnType<typeof discoverPeople>>[number]): Creat
     id: r.id,
     name: r.name || 'New member',
     role: [r.roles.slice(0, 2).join(' · ') || r.tagline, r.location].filter(Boolean).join(' · '),
-    discipline: disciplineFor(r.roles),
+    mediums: r.roles,
     openTo: r.open_to[0] ? `Open to ${r.open_to[0].toLowerCase()}` : 'Open to collaborating',
     art: {
       bg: colorFor(r.id),
@@ -111,7 +107,7 @@ function CommonLink({ creator: c }: { creator: Creator }) {
 }
 
 export default function Discover() {
-  const [filter, setFilter] = useState<Discipline>('All');
+  const [medium, setMedium] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [matching, setMatching] = useState(false);
   const [mutualsOnly, setMutualsOnly] = useState(false);
@@ -124,9 +120,9 @@ export default function Discover() {
   const q = query.trim().toLowerCase();
   const base = source.filter(
     (c) =>
-      (filter === 'All' || c.discipline === filter) &&
+      (!medium || c.mediums.includes(medium)) &&
       (!mutualsOnly || hasCommonLink(c)) &&
-      (!q || `${c.name} ${c.role} ${c.openTo}`.toLowerCase().includes(q)),
+      (!q || `${c.name} ${c.role} ${c.mediums.join(' ')} ${c.openTo}`.toLowerCase().includes(q)),
   );
   const scored: Scored[] = matching
     ? base
@@ -160,7 +156,7 @@ export default function Discover() {
               <TextInput
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Try: vocalist, Chula Vista"
+                placeholder="Try: singer, dancer, Chula Vista"
                 placeholderTextColor={colors.muted}
                 accessibilityLabel="Search creatives"
                 style={styles.input}
@@ -186,8 +182,9 @@ export default function Discover() {
                 <Icon name="users" size={16} color={mutualsOnly ? colors.lime : colors.forest} />
                 <Text style={[styles.matchToggleText, mutualsOnly && { color: colors.lime }]}>Mutuals</Text>
               </Tap>
-              {disciplines.map((d) => (
-                <Chip key={d} dark label={d} selected={filter === d} onPress={() => setFilter(d)} />
+              <Chip dark label="All" selected={!medium} onPress={() => setMedium(null)} />
+              {roles.map((r) => (
+                <Chip key={r} dark label={mediumLabel(r)} selected={medium === r} onPress={() => setMedium(medium === r ? null : r)} />
               ))}
             </ScrollView>
           </View>

@@ -12,6 +12,7 @@ import { demoConversations } from '../../data/content';
 import { fetchConversation, sendMessage, useLoad } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { colorFor, initialsOf, timeAgo } from '../../lib/format';
+import { hasLink, suspicion } from '../../lib/spam';
 import { supabase } from '../../lib/supabase';
 import { useDemo } from '../../state/DemoState';
 import { colors, fonts } from '../../theme';
@@ -23,11 +24,11 @@ export async function generateStaticParams(): Promise<Record<string, string>[]> 
 type Bubble = { key: string; mine: boolean; body: string; time: string; image?: string };
 
 export default function Conversation() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, draft: started } = useLocalSearchParams<{ id: string; draft?: string }>();
   const { live, me } = useAuth();
   const { sentMessages, sendDemoMessage, showToast } = useDemo();
   const insets = useSafeAreaInsets();
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(started ?? '');
   const [busy, setBusy] = useState(false);
   const scroll = useRef<ScrollView>(null);
 
@@ -54,6 +55,11 @@ export default function Conversation() {
   const bubbles: Bubble[] = live
     ? (loaded.data?.messages ?? []).map((m) => ({ key: m.id, mine: m.sender === me?.id, body: m.body, time: timeAgo(m.created_at), image: m.imageUrl }))
     : [...(demo?.messages ?? []), ...(sentMessages[id] ?? [])].map((m, i) => ({ key: String(i), mine: m.from === 'me', body: m.body, time: m.time }));
+
+  // Warn before anyone replies to a stranger's link or promo offer.
+  const wrote = bubbles.some((b) => b.mine);
+  const theirs = bubbles.filter((b) => !b.mine).map((b) => b.body);
+  const flag = theirs.map(suspicion).find(Boolean) ?? (!wrote && theirs.some(hasLink) ? 'Has a link' : null);
 
   useEffect(() => {
     setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 50);
@@ -109,6 +115,16 @@ export default function Conversation() {
         </Tap>
       ) : null}
 
+      {flag ? (
+        <View style={styles.warn} accessibilityRole="alert">
+          <Icon name="shield" size={18} color={colors.lime} />
+          <Text style={styles.warnText}>
+            <Text style={{ fontFamily: fonts.body600 }}>{flag}. </Text>
+            Nexus never charges to promote your work. Don’t pay, or sign in through a link, for someone you don’t know. Tap ••• to report it.
+          </Text>
+        </View>
+      ) : null}
+
       <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={styles.thread}>
         {live && loaded.loading && !loaded.data ? <ActivityIndicator color={colors.forest} /> : null}
         {bubbles.map((b) => (
@@ -149,6 +165,8 @@ export default function Conversation() {
 const styles = StyleSheet.create({
   who: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
   thread: { padding: 16, gap: 8 },
+  warn: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: colors.ink, marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 12 },
+  warnText: { flex: 1, fontFamily: fonts.body400, fontSize: 13, lineHeight: 19, color: colors.cream },
   bubble: { maxWidth: '80%', borderRadius: 18, paddingVertical: 10, paddingHorizontal: 14, gap: 4 },
   mine: { alignSelf: 'flex-end', backgroundColor: colors.forest, borderBottomRightRadius: 6 },
   theirs: { alignSelf: 'flex-start', backgroundColor: colors.paper, borderBottomLeftRadius: 6 },

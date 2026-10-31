@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { MeAvatar } from '../components/Me';
-import { Button, Chip, Tap, text } from '../components/ui';
+import { Button, Chip, Switch, Tap, text } from '../components/ui';
 import { demoGroups, PostKind } from '../data/content';
 import { createPost, fetchMyGroups, useLoad } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -19,6 +19,7 @@ const kinds: { kind: PostKind; hint: string }[] = [
   { kind: 'New work', hint: 'Share something you made. What is it, and who should see it?' },
   { kind: 'Looking for', hint: 'Who are you looking for? Say the role, the vibe and where.' },
   { kind: 'Crew call', hint: 'What’s the shoot or show? Date, place, roles and whether it’s paid.' },
+  { kind: 'Show', hint: 'Promote your show: who’s playing, when, where, and the price or ticket link.' },
 ];
 
 export default function Compose() {
@@ -35,6 +36,7 @@ export default function Compose() {
   const [kind, setKind] = useState<PostKind>('New work');
   const [body, setBody] = useState('');
   const [image, setImage] = useState<string | undefined>();
+  const [raw, setRaw] = useState(false);
 
   const pick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true });
@@ -47,21 +49,19 @@ export default function Compose() {
     if (live) {
       setBusy(true);
       try {
-        await createPost(kind, body.trim(), image, audience ?? undefined);
+        await createPost(kind, body.trim(), image, audience ?? undefined, kind === 'New work' && raw);
       } catch (e) {
         showToast((e as Error).message);
         setBusy(false);
         return;
       }
     } else {
-      addPost({ kind, text: body.trim(), image, groupId: audience ?? undefined });
+      addPost({ kind, text: body.trim(), image, groupId: audience ?? undefined, raw: kind === 'New work' && raw });
     }
     showToast(
       audience
         ? `Shared privately with **${groupName ?? 'your group'}**.`
-        : image
-          ? 'Posted. **AI protection** is on for your photo.'
-          : 'Posted to your **followers’ timelines**.',
+        : 'Posted to every **follower’s timeline**.',
     );
     if (router.canGoBack()) router.back();
     else router.replace('/timeline');
@@ -144,19 +144,31 @@ export default function Compose() {
         </Tap>
       )}
 
+      {kind === 'New work' ? (
+        <View style={styles.rawRow}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.rawTitle}>Raw · unedited</Text>
+            <Text style={text.small}>A first take, a rehearsal, a sketch. Nexus values the real thing, not just the polished one.</Text>
+          </View>
+          <Switch label="Raw, unedited" value={raw} onToggle={() => setRaw(!raw)} />
+        </View>
+      ) : null}
+
       <View style={styles.protect}>
         <Icon name={audience ? 'lock' : 'shield'} size={18} color={colors.lime} />
         <Text style={styles.protectText}>
           {audience
             ? `Private: only ${groupName ?? 'group'} members can see this post or open its photo. It never reaches Discover, your profile or AI crawlers.`
-            : 'Uploads are marked do-not-train, watermarked and only shown to signed-in members.'}
+            : live
+              ? 'Only signed-in members can see your photos. Nexus never sells your work or uses it to train AI.'
+              : 'Uploads are marked do-not-train, watermarked and only shown to signed-in members.'}
         </Text>
       </View>
 
       <Text style={text.small}>
         {audience
           ? 'Want it one to one instead? Send it in Messages.'
-          : 'Goes to your followers’ timelines, newest first, and to the Posts tab on your profile.'}
+          : 'Reaches every one of your followers, newest first, and the Posts tab on your profile. No algorithm decides who sees it.'}
       </Text>
 
       <Button variant="big" label={busy ? 'Posting…' : 'Post'} onPress={ready ? post : undefined} style={!ready && { opacity: 0.45 }} />
@@ -169,6 +181,8 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   title: { fontFamily: fonts.display800, fontSize: 28, letterSpacing: -0.6, color: colors.ink },
   kinds: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  rawRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.paper, borderRadius: 18, padding: 14 },
+  rawTitle: { fontFamily: fonts.body600, fontSize: 14.5, color: colors.ink },
   audienceLabel: { fontFamily: fonts.body600, fontSize: 13, color: colors.forest },
   audience: {
     flexDirection: 'row',

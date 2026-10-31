@@ -2,7 +2,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { postKindColors } from '../data/content';
+import { PostKind, postKindColors } from '../data/content';
 import { FeedItem, openConversation, requestCollab, setPinned, setSaved } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { colorFor, firstNameOf, initialsOf, timeAgo } from '../lib/format';
@@ -12,12 +12,23 @@ import { Icon } from './Icon';
 import { SafetyMenu } from './Safety';
 import { Avatar, Button, Card, Pill, Tap, text } from './ui';
 
-const ctaFor = { 'Looking for': 'I’m interested', 'New work': 'Collaborate', 'Crew call': 'Apply' } as const;
+const ctaFor = { 'Looking for': 'I’m interested', 'New work': 'Collaborate', 'Crew call': 'Apply', Show: 'Save the date' } as const;
 
-/** Opens (or starts) your private conversation with someone. */
-export async function messageUser(userId: string) {
+/** The post's kind, plus a Raw tag for unedited work. */
+export function PostTags({ kind, raw }: { kind: PostKind; raw?: boolean }) {
+  const c = postKindColors[kind];
+  return (
+    <View style={{ alignItems: 'flex-end', gap: 4 }}>
+      <Pill label={kind} bg={c.bg} fg={c.fg} />
+      {raw ? <Pill label="Raw · unedited" bg={colors.cream} fg={colors.forest} style={{ borderWidth: 1, borderColor: colors.line2 }} /> : null}
+    </View>
+  );
+}
+
+/** Opens (or starts) your private conversation with someone, optionally with a message started. */
+export async function messageUser(userId: string, draft?: string) {
   const id = await openConversation(userId);
-  router.push({ pathname: '/messages/[id]', params: { id } });
+  router.push({ pathname: '/messages/[id]', params: draft ? { id, draft } : { id } });
 }
 
 export function openProfile(id: string, myId?: string) {
@@ -31,7 +42,6 @@ export function LivePostCard({ item, onChanged, showPin }: { item: FeedItem; onC
   const { post: p, author } = item;
   const [saved, setSavedState] = useState(item.saved);
   const mine = me?.id === author.id;
-  const kind = postKindColors[p.kind];
 
   const toggleSave = async () => {
     setSavedState(!saved);
@@ -78,7 +88,7 @@ export function LivePostCard({ item, onChanged, showPin }: { item: FeedItem; onC
             {p.pinned ? 'Pinned' : timeAgo(p.created_at)}
           </Text>
         </View>
-        <Pill label={p.kind} bg={kind.bg} fg={kind.fg} />
+        <PostTags kind={p.kind} raw={p.raw} />
       </Tap>
       {!mine ? (
         <View style={styles.menu}>
@@ -100,8 +110,14 @@ export function LivePostCard({ item, onChanged, showPin }: { item: FeedItem; onC
         ) : null
       ) : (
         <View style={styles.actions}>
-          <Button label={ctaFor[p.kind]} style={{ flex: 1 }} onPress={collab} />
-          <Button variant="ghost" label={saved ? 'Saved' : 'Save'} selected={saved} onPress={toggleSave} />
+          {p.kind === 'Show' ? (
+            <Button label={saved ? 'Saved' : ctaFor.Show} selected={saved} style={{ flex: 1 }} onPress={toggleSave} />
+          ) : (
+            <>
+              <Button label={ctaFor[p.kind]} style={{ flex: 1 }} onPress={collab} />
+              <Button variant="ghost" label={saved ? 'Saved' : 'Save'} selected={saved} onPress={toggleSave} />
+            </>
+          )}
           <Button
             variant="ghost"
             accessibilityLabel={`Message ${author.name}`}

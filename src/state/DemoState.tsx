@@ -2,7 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useMemo, useRef, use
 import { DemoMessage, OptionId, PostKind, profile, TicketTier, workModules } from '../data/content';
 
 /** A post written in the demo, shown at the top of the timeline and on the profile. */
-export type UserPost = { id: string; kind: PostKind; text: string; image?: string; groupId?: string };
+export type UserPost = { id: string; kind: PostKind; text: string; image?: string; groupId?: string; raw?: boolean };
 
 export type HeaderStyle = { cover: string; pattern: 'none' | 'waves' | 'grid' | 'dots' };
 

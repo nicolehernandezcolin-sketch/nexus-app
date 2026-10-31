@@ -14,6 +14,7 @@ import { LivePostCard } from './Feed';
 import { Icon } from './Icon';
 import { MeAvatar } from './Me';
 import { CoverBanner, CustomizePanel } from './ProfileHeader';
+import { PromptCards } from './Prompts';
 import { ProfileTabs, WorkModules } from './ProfileSections';
 import { Button, Card, Pill, SectionTitle, Tap, text } from './ui';
 
@@ -107,6 +108,18 @@ export function LiveProfile() {
       </View>
 
       <View style={{ padding: 20, gap: 22 }}>
+        {me.prompts?.length ? (
+          <PromptCards prompts={me.prompts} />
+        ) : (
+          <Tap accessibilityRole="button" onPress={() => router.push('/edit-profile')} style={styles.addPrompts}>
+            <Icon name="plus" size={18} color={colors.forest} />
+            <View style={{ flex: 1 }}>
+              <Text style={text.strong}>Add prompts to your profile</Text>
+              <Text style={text.small}>“Currently making…”, “A dream collab…”. They help people know you before they reach out.</Text>
+            </View>
+          </Tap>
+        )}
+
         {data.loading && !data.data ? <ActivityIndicator color={colors.forest} /> : null}
         {data.error ? <Text style={text.sub}>Couldn’t load your profile: {data.error}</Text> : null}
 
@@ -194,5 +207,6 @@ const styles = StyleSheet.create({
   upMonth: { fontFamily: fonts.display700, fontSize: 9, letterSpacing: 1, color: colors.forest },
   upDay: { fontFamily: fonts.display800, fontSize: 17, lineHeight: 18, color: colors.forest },
   upTitle: { fontFamily: fonts.display700, fontSize: 15, lineHeight: 18, color: colors.ink, minHeight: 36 },
+  addPrompts: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.line2 },
   met: { borderRadius: 16, padding: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
 });

@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackHeader, Screen } from '../../components/Chrome';
 import { LivePostCard, messageUser } from '../../components/Feed';
 import { Icon } from '../../components/Icon';
+import { CoverBanner } from '../../components/ProfileHeader';
+import { PromptCards, riffDraft } from '../../components/Prompts';
 import { SafetyMenu } from '../../components/Safety';
 import { ArtBlock, Avatar, Button, Card, Pill, Rise, SectionTitle, Tap, text } from '../../components/ui';
 import { allWork, people, personById, workFor } from '../../data/content';
@@ -70,6 +72,7 @@ function LivePerson({ id }: { id: string }) {
 
   return (
     <Screen header={<BackHeader label="Back" fallback="/discover" />} contentStyle={{ paddingBottom: 32 + insets.bottom }}>
+      <CoverBanner style={p.header} height={96} />
       <View style={styles.hero}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Avatar initials={initialsOf(p.name)} photo={avatarUrl ? { uri: avatarUrl } : undefined} bg={colorFor(p.id)} fg={colors.cream} size={76} ring={colors.lime} />
@@ -103,6 +106,10 @@ function LivePerson({ id }: { id: string }) {
       </View>
 
       <View style={{ padding: 20, gap: 14 }}>
+        <PromptCards
+          prompts={p.prompts ?? []}
+          onRiff={(q) => messageUser(p.id, riffDraft(q)).catch((e) => showToast((e as Error).message))}
+        />
         {p.open_to.length ? (
           <View style={{ gap: 10 }}>
             <SectionTitle>Open to</SectionTitle>
@@ -159,7 +166,8 @@ function DemoPerson({ id }: { id: string }) {
   const first = person.name.split(' ')[0];
 
   return (
-    <Screen header={<BackHeader label="Back" fallback="/profile" />} contentStyle={{ paddingBottom: 32 + insets.bottom }}>
+    <Screen header={<BackHeader label="Back" fallback={person.artist ? '/discover' : '/profile'} />} contentStyle={{ paddingBottom: 32 + insets.bottom }}>
+      {person.cover ? <CoverBanner style={person.cover} height={96} /> : null}
       <View style={styles.hero}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Avatar initials={person.initials} photo={person.photo} bg={person.avatar} fg={colors.cream} size={76} ring={colors.lime} />
@@ -189,6 +197,10 @@ function DemoPerson({ id }: { id: string }) {
       </View>
 
       <View style={{ padding: 20, gap: 12 }}>
+        <PromptCards
+          prompts={person.prompts ?? []}
+          onRiff={(q) => showToast(`Message to **${first}** started: ${riffDraft(q)}…`)}
+        />
         {worked.length ? <SectionTitle>Worked on</SectionTitle> : null}
         {worked.map((w, i) => (
           <Rise key={w.workId} delay={i * 70}>

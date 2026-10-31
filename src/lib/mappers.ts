@@ -36,6 +36,8 @@ export function toNexusEvent(e: EventView): LiveEvent {
       plain: true,
     },
     sale,
+    lat: e.lat ?? undefined,
+    lng: e.lng ?? undefined,
     friends: [],
     friendsText: e.going ? `${e.going} going` : 'Be the first to say you’re going',
     live: e,
