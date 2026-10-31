@@ -38,7 +38,7 @@ export function openProfile(id: string, myId?: string) {
 
 export function LivePostCard({ item, onChanged, showPin }: { item: FeedItem; onChanged?: () => void; showPin?: boolean }) {
   const { me } = useAuth();
-  const { showToast } = useDemo();
+  const { showToast, celebrate } = useDemo();
   const { post: p, author } = item;
   const [saved, setSavedState] = useState(item.saved);
   const mine = me?.id === author.id;
@@ -56,7 +56,7 @@ export function LivePostCard({ item, onChanged, showPin }: { item: FeedItem; onC
   const collab = async () => {
     try {
       await requestCollab(author.id, p.id);
-      showToast(`Request sent to **${firstNameOf(author.name)}**. They’ll see it next time they open Nexus.`);
+      celebrate(`Request sent to **${firstNameOf(author.name)}**. They’ll see it next time they open Nexus.`);
     } catch (e) {
       showToast((e as Error).message);
     }

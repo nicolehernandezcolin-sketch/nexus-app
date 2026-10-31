@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ReactNode, useEffect } from 'react';
 import { Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Celebration } from '../components/Celebration';
 import { Toast } from '../components/Chrome';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { DemoProvider } from '../state/DemoState';
@@ -31,6 +32,7 @@ export default function RootLayout() {
           <WebFrame>
             <Gate />
             <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.cream } }} />
+            <Celebration />
             <Toast />
           </WebFrame>
         </DemoProvider>

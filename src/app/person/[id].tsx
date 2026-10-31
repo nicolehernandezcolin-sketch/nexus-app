@@ -29,7 +29,7 @@ export default function PersonScreen() {
 
 /** A real member's profile. */
 function LivePerson({ id }: { id: string }) {
-  const { showToast } = useDemo();
+  const { showToast, celebrate } = useDemo();
   const insets = useSafeAreaInsets();
   const loaded = useLoad(async () => {
     const [profile, posts, following, metAt] = await Promise.all([getProfile(id), fetchPostsBy(id), isFollowing(id), fetchCheckins(id)]);
@@ -53,7 +53,7 @@ function LivePerson({ id }: { id: string }) {
     try {
       await setFollowing(p.id, !following);
       loaded.setData({ ...loaded.data!, following: !following });
-      if (!following) showToast(`Following **${first}**. Their posts now show on your timeline.`);
+      if (!following) celebrate(`Following **${first}**. Their posts now show on your timeline.`);
     } catch (e) {
       showToast((e as Error).message);
     } finally {
@@ -64,7 +64,7 @@ function LivePerson({ id }: { id: string }) {
   const collab = async () => {
     try {
       await requestCollab(p.id);
-      showToast(`Collaboration request sent to **${first}**.`);
+      celebrate(`Collaboration request sent to **${first}**.`);
     } catch (e) {
       showToast((e as Error).message);
     }
@@ -148,7 +148,7 @@ function LivePerson({ id }: { id: string }) {
 }
 
 function DemoPerson({ id }: { id: string }) {
-  const { showToast } = useDemo();
+  const { showToast, celebrate } = useDemo();
   const insets = useSafeAreaInsets();
   const person = personById(id);
 
@@ -190,7 +190,7 @@ function DemoPerson({ id }: { id: string }) {
             variant="lime"
             label="Let’s collaborate"
             style={{ flex: 1, height: 44 }}
-            onPress={() => showToast(`Collaboration request sent to **${first}**.`)}
+            onPress={() => celebrate(`Collaboration request sent to **${first}**.`)}
           />
           <Button variant="outlineDark" label="Message" style={{ flex: 1, height: 44 }} onPress={() => router.push('/messages')} />
         </View>

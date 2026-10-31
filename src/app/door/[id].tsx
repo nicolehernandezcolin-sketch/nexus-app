@@ -12,7 +12,7 @@ import { colors, fonts } from '../../theme';
 /** For hosts at the door: find a ticket by its code or the holder's name and check it in, once. */
 export default function DoorList() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { showToast } = useDemo();
+  const { showToast, celebrate } = useDemo();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
@@ -37,7 +37,8 @@ export default function DoorList() {
           : r.result === 'already'
             ? `Already used${r.used_at ? ` at ${new Date(r.used_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}. Don’t let a second person in.`
             : 'This ticket was refunded. It doesn’t get in.';
-      showToast(message);
+      if (r.result === 'ok') celebrate(message);
+      else showToast(message);
       AccessibilityInfo.announceForAccessibility(message.replace(/\*\*/g, ''));
       setQuery('');
       await loaded.reload();

@@ -14,7 +14,7 @@ import { useDemo } from '../state/DemoState';
 import { colors, fonts } from '../theme';
 
 export default function Profile() {
-  const { showToast, profileTab, header } = useDemo();
+  const { profileTab, header, celebrate } = useDemo();
   const [customizing, setCustomizing] = useState(false);
   const { live, me } = useAuth();
   if (live) return me ? <LiveProfile /> : null;
@@ -80,7 +80,7 @@ export default function Profile() {
             variant="lime"
             label="Let’s collaborate"
             style={{ flex: 1, height: 44 }}
-            onPress={() => showToast(`Collaboration request sent to **${profile.firstName}**.`)}
+            onPress={() => celebrate(`Collaboration request sent to **${profile.firstName}**.`)}
           />
           <Button
             variant="outlineDark"

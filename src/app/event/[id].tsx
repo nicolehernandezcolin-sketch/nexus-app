@@ -298,7 +298,7 @@ function FreeRsvp({
   note: string;
   onChanged?: () => void;
 }) {
-  const { tickets, buyTickets, showToast } = useDemo();
+  const { tickets, buyTickets, showToast, celebrate } = useDemo();
   const liveRow = (e as Partial<LiveEvent>).live;
   const going = liveRow
     ? liveRow.mine
@@ -306,12 +306,12 @@ function FreeRsvp({
   const rsvp = async (yes: boolean) => {
     if (!liveRow) {
       buyTickets(e.id, { id: "rsvp", name: "Free RSVP", price: 0 }, 1);
-      showToast("You’re on the list. See you **in person**.");
+      celebrate("You’re on the list. See you **in person**.");
       return;
     }
     try {
       await setRsvp(liveRow.id, yes);
-      if (yes) showToast("You’re on the list. See you **in person**.");
+      if (yes) celebrate("You’re on the list. See you **in person**.");
       onChanged?.();
     } catch (err) {
       showToast((err as Error).message);
@@ -361,7 +361,7 @@ function FreeRsvp({
           label="RSVP"
           onPress={() => {
             buyTickets(e.id, { id: "rsvp", name: "Free RSVP", price: 0 }, 1);
-            showToast("You’re on the list. See you **in person**.");
+            celebrate("You’re on the list. See you **in person**.");
           }}
         />
       )}
@@ -382,7 +382,7 @@ function Drawing({
   note: string;
   onChanged?: () => void;
 }) {
-  const { drawings, enterDrawing: enterDemo, showToast } = useDemo();
+  const { drawings, enterDrawing: enterDemo, showToast, celebrate } = useDemo();
   const liveRow = (e as Partial<LiveEvent>).live;
   const entered = liveRow ? liveRow.entered : !!drawings[e.id];
   const enterDrawing = async (id: string) => {
@@ -435,7 +435,7 @@ function Drawing({
           label="Enter the drawing"
           onPress={() => {
             enterDrawing(e.id);
-            showToast("You’re in the drawing. **Good luck.**");
+            celebrate("You’re in the drawing. **Good luck.**");
           }}
         />
       )}

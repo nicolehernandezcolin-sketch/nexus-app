@@ -39,6 +39,9 @@ type DemoState = {
   buyTickets: (eventId: string, tier: TicketTier, quantity: number) => void;
   enterDrawing: (eventId: string) => void;
   showToast: (message: string) => void;
+  /** Plays the celebration burst (and shows `message` as a toast, if given). Counts up each time. */
+  burst: number;
+  celebrate: (message?: string) => void;
 };
 
 const Ctx = createContext<DemoState | null>(null);
@@ -56,6 +59,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [drawings, setDrawings] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState<string | null>(null);
+  const [burst, setBurst] = useState(0);
   const [profileTab, setProfileTab] = useState<ProfileTab>('work');
   const [moduleOrder, setModuleOrder] = useState(() => workModules.map((m) => m.id));
   const [hiddenModules, setHiddenModules] = useState<Record<string, boolean>>({});
@@ -71,6 +75,14 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setToast(null), 2600);
   }, []);
+
+  const celebrate = useCallback(
+    (message?: string) => {
+      setBurst((n) => n + 1);
+      if (message) showToast(message);
+    },
+    [showToast],
+  );
 
   const value = useMemo<DemoState>(
     () => ({
@@ -122,8 +134,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         ]),
       enterDrawing: (id) => setDrawings((s) => ({ ...s, [id]: true })),
       showToast,
+      burst,
+      celebrate,
     }),
-    [roles, options, saved, tickets, drawings, toast, profileTab, moduleOrder, hiddenModules, collapsedModules, pinnedPost, userPosts, sentMessages, header, showToast],
+    [roles, options, saved, tickets, drawings, toast, profileTab, moduleOrder, hiddenModules, collapsedModules, pinnedPost, userPosts, sentMessages, header, showToast, burst, celebrate],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

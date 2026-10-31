@@ -23,7 +23,7 @@ const kinds: { kind: PostKind; hint: string }[] = [
 ];
 
 export default function Compose() {
-  const { addPost, showToast } = useDemo();
+  const { addPost, showToast, celebrate } = useDemo();
   const { live } = useAuth();
   const params = useLocalSearchParams<{ group?: string }>();
   const [audience, setAudience] = useState<string | null>(params.group ?? null);
@@ -58,7 +58,7 @@ export default function Compose() {
     } else {
       addPost({ kind, text: body.trim(), image, groupId: audience ?? undefined, raw: kind === 'New work' && raw });
     }
-    showToast(
+    celebrate(
       audience
         ? `Shared privately with **${groupName ?? 'your group'}**.`
         : 'Posted to every **follower’s timeline**.',

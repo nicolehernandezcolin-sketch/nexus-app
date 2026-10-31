@@ -212,7 +212,7 @@ function LiveTickets() {
     order?: string;
     cancelled?: string;
   }>();
-  const { showToast } = useDemo();
+  const { showToast, celebrate } = useDemo();
   const insets = useSafeAreaInsets();
   const loaded = useLoad(fetchMyTickets, []);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -236,7 +236,7 @@ function LiveTickets() {
         clearInterval(timer);
         setConfirming(null);
         await loaded.reload();
-        showToast("You’re in. **Your tickets are here.**");
+        celebrate("You’re in. **Your tickets are here.**");
       } else if (status === "expired" || tries > 30) {
         clearInterval(timer);
         setConfirming("expired");

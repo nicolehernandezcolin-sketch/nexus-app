@@ -96,7 +96,7 @@ export default function Timeline() {
 }
 
 function PostCard({ post: p }: { post: Post }) {
-  const { saved, toggleSaved, showToast } = useDemo();
+  const { saved, toggleSaved, celebrate } = useDemo();
   const isSaved = !!saved[p.id];
   return (
     <Card style={styles.card}>
@@ -120,7 +120,7 @@ function PostCard({ post: p }: { post: Post }) {
             <Button
               label={p.cta}
               style={{ flex: 1 }}
-              onPress={() => showToast(`Request sent to **${p.firstName}**. They’ll see it next time they open Nexus.`)}
+              onPress={() => celebrate(`Request sent to **${p.firstName}**. They’ll see it next time they open Nexus.`)}
             />
             <Button variant="ghost" label={isSaved ? 'Saved' : 'Save'} selected={isSaved} onPress={() => toggleSaved(p.id)} />
           </>

@@ -21,7 +21,7 @@ export async function generateStaticParams(): Promise<Record<string, string>[]> 
 
 export default function Checkout() {
   const { id, tier: tierId, qty } = useLocalSearchParams<{ id: string; tier?: string; qty?: string }>();
-  const { tickets, buyTickets, showToast } = useDemo();
+  const { tickets, buyTickets, celebrate } = useDemo();
   const { live } = useAuth();
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState(false);
@@ -60,7 +60,7 @@ export default function Checkout() {
 
   const pay = () => {
     buyTickets(event.id, tier, quantity);
-    showToast(`You’re in. **${quantity} ticket${quantity > 1 ? 's' : ''}** in your wallet.`);
+    celebrate(`You’re in. **${quantity} ticket${quantity > 1 ? 's' : ''}** in your wallet.`);
     router.replace('/tickets');
   };
 
