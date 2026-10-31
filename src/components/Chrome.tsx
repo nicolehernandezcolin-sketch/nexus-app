@@ -1,9 +1,10 @@
 // App chrome: bottom navigation, screen wrapper, page header and toast.
 import { Href, router, usePathname } from 'expo-router';
 import { ReactNode, useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, ScrollView, ScrollViewProps, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, ScrollViewProps, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDemo } from '../state/DemoState';
+import { Glow } from './Glow';
 import { colors, fonts } from '../theme';
 import { Icon, IconName } from './Icon';
 import { text } from './ui';
@@ -58,13 +59,21 @@ export function Screen({
   overlay?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  const scrollY = useRef(new Animated.Value(0)).current;
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <Glow scrollY={scrollY} />
       {header}
       <View style={{ flex: 1 }}>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={contentStyle} keyboardShouldPersistTaps="handled">
+        <Animated.ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={contentStyle}
+          keyboardShouldPersistTaps="handled"
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        >
           {children}
-        </ScrollView>
+        </Animated.ScrollView>
         {overlay}
       </View>
       {footer}
