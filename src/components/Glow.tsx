@@ -1,6 +1,7 @@
-// The soft light behind every screen: slow-drifting glows that also shift as you scroll.
+// The soft light behind every screen: slow-drifting glows that shift as you scroll, and a
+// spotlight that follows your finger.
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, View, ViewProps } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { colors } from '../theme';
 import { useReduceMotion } from './ui';
@@ -65,4 +66,76 @@ export function Glow({ scrollY }: { scrollY?: Animated.Value }) {
       ))}
     </View>
   );
+}
+
+const LIGHT = 280;
+
+/**
+ * A spotlight that follows your finger (or the mouse on the web). Spread `handlers` on the
+ * screen's root view and render `light` behind the content. It only listens, so taps and
+ * scrolling work as usual.
+ */
+export function useFingerGlow() {
+  const still = useReduceMotion();
+  const x = useRef(new Animated.Value(-LIGHT)).current;
+  const y = useRef(new Animated.Value(-LIGHT)).current;
+  const shown = useRef(new Animated.Value(0)).current;
+
+  const follow = (px: number, py: number) => {
+    const to = { x: px - LIGHT / 2, y: py - LIGHT / 2 };
+    if (still) {
+      x.setValue(to.x);
+      y.setValue(to.y);
+      return;
+    }
+    Animated.spring(x, { toValue: to.x, useNativeDriver: true, speed: 14, bounciness: 4 }).start();
+    Animated.spring(y, { toValue: to.y, useNativeDriver: true, speed: 14, bounciness: 4 }).start();
+  };
+  const show = (on: boolean) =>
+    Animated.timing(shown, { toValue: on ? 1 : 0, duration: on ? 180 : 700, useNativeDriver: true }).start();
+
+  const handlers: Partial<ViewProps> = {
+    onTouchStart: (e) => {
+      const { pageX, pageY } = e.nativeEvent;
+      x.setValue(pageX - LIGHT / 2);
+      y.setValue(pageY - LIGHT / 2);
+      show(true);
+    },
+    onTouchMove: (e) => follow(e.nativeEvent.pageX, e.nativeEvent.pageY),
+    onTouchEnd: () => show(false),
+    onTouchCancel: () => show(false),
+  };
+  if (Platform.OS === 'web') {
+    // A mouse has no touches: follow the pointer while it's over the app.
+    Object.assign(handlers, {
+      onPointerMove: (e: { nativeEvent: { pageX: number; pageY: number; pointerType?: string } }) => {
+        if (e.nativeEvent.pointerType === 'touch') return;
+        follow(e.nativeEvent.pageX, e.nativeEvent.pageY);
+        show(true);
+      },
+      onPointerLeave: () => show(false),
+    });
+  }
+
+  const light = (
+    <Animated.View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{ position: 'absolute', top: 0, left: 0, width: LIGHT, height: LIGHT, opacity: shown, transform: [{ translateX: x }, { translateY: y }] }}
+    >
+      <Svg width="100%" height="100%">
+        <Defs>
+          <RadialGradient id="finger-glow" cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor={colors.lime} stopOpacity={0.95} />
+            <Stop offset="0.45" stopColor={colors.lime} stopOpacity={0.45} />
+            <Stop offset="1" stopColor={colors.lime} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#finger-glow)" />
+      </Svg>
+    </Animated.View>
+  );
+
+  return { handlers, light };
 }

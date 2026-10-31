@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, ScrollViewProps, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDemo } from '../state/DemoState';
-import { Glow } from './Glow';
+import { Glow, useFingerGlow } from './Glow';
 import { colors, fonts } from '../theme';
 import { Icon, IconName } from './Icon';
 import { text } from './ui';
@@ -60,9 +60,11 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const finger = useFingerGlow();
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View style={[styles.screen, { paddingTop: insets.top }]} {...finger.handlers}>
       <Glow scrollY={scrollY} />
+      {finger.light}
       {header}
       <View style={{ flex: 1 }}>
         <Animated.ScrollView
