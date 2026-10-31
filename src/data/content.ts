@@ -125,7 +125,7 @@ export const disciplines = ['All', 'Music', 'Film', 'Visual', 'Movement'] as con
 export type Discipline = (typeof disciplines)[number];
 
 // Talent match vocabulary: what someone can bring, and what kind of project it's for.
-export const skills = ['Vocals', 'Drums', 'Bass', 'Film crew', 'Editing', 'Visual art', 'Choreography', 'Sound'] as const;
+export const skills = ['Vocals', 'Drums', 'Bass', 'Film crew', 'Editing', 'Visual art', 'Dance', 'Choreography', 'Sound'] as const;
 export const projectTypes = ['Music video', 'Live show', 'Album art', 'Short film', 'Stage show'] as const;
 export type Skill = (typeof skills)[number];
 export type ProjectType = (typeof projectTypes)[number];
@@ -148,6 +148,11 @@ export type Creator = {
 };
 
 export const creators: Creator[] = [
+  // Nexus artists, with profile pages (see `people` below).
+  { id: 'katriz-trinidad', name: 'Katriz Trinidad', role: 'Singer', discipline: 'Music', openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'KT', plain: true }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { id: 'jennifer-hernandez', name: 'Jennifer Hernandez', role: 'Dancer', discipline: 'Movement', openTo: 'Open to stage work', art: { bg: colors.lime, fg: colors.ink, height: 160, label: 'JH', plain: true }, skills: ['Dance'], projects: ['Stage show', 'Music video'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { id: 'jessica-tibbits', name: 'Jessica Tibbits', role: 'Dancer', discipline: 'Movement', openTo: 'Open to music videos', art: { bg: colors.ink, fg: colors.lime, height: 170, label: 'JT', plain: true }, skills: ['Dance'], projects: ['Music video', 'Stage show'], city: 'San Diego', sharedAt: [], mutuals: [] },
+  { id: 'nona', name: 'Nona', role: 'Musician', discipline: 'Music', openTo: 'Open to live shows', art: { bg: colors.olive, fg: colors.cream, height: 150, label: 'N', plain: true }, skills: [], projects: ['Live show'], city: 'San Diego', sharedAt: [], mutuals: [] },
   { name: 'Sofia Ramos', role: 'Vocalist · Chula Vista', discipline: 'Music', openTo: 'Open to features', art: { bg: colors.forest, fg: colors.lime, height: 190, label: 'Live set' }, skills: ['Vocals'], projects: ['Music video', 'Live show'], city: 'Chula Vista', sharedAt: ['Nexus Film Festival', 'UC Series at UCSD'], mutuals: ['Marisol Vega'] },
   { name: 'Kai Nakamura', role: 'Cinematographer', discipline: 'Film', openTo: 'Open to music videos', art: { bg: colors.sand, fg: colors.forest, height: 130, label: 'Reel still' }, skills: ['Film crew'], projects: ['Music video', 'Short film'], city: 'San Diego', sharedAt: ['Nexus Film Festival', 'Latin Jazz Night', 'Nex Up'], mutuals: ['Lena Park', 'Ruben Ortiz'] },
   { name: 'Dani Flores', role: 'Muralist', discipline: 'Visual', openTo: 'Open to commissions', art: { bg: colors.lime, fg: colors.ink, height: 220, label: 'Mural' }, skills: ['Visual art'], projects: ['Album art', 'Stage show'], city: 'San Diego', sharedAt: [], mutuals: [] },
@@ -497,6 +502,8 @@ export type Person = {
   avatar: string;
   photo?: ImageSourcePropType;
   bio?: string;
+  /** An artist on Nexus rather than a member of the Nexus team. */
+  artist?: boolean;
   link?: { label: string; url: string };
 };
 
@@ -519,6 +526,11 @@ export const people: Person[] = [
   { id: 'melina-martinez', name: 'Melina Martinez', initials: 'MM', role: 'Event Coordinator', avatar: colors.olive },
   { id: 'kendra-mcfadden', name: 'Kendra McFadden', initials: 'KM', role: 'Producer', avatar: colors.ink },
   { id: 'zavier-gordon', name: 'Zavier Gordon', initials: 'ZG', role: 'Cinematographer', avatar: colors.forest },
+  // Artists in Discover.
+  { id: 'katriz-trinidad', name: 'Katriz Trinidad', initials: 'KT', role: 'Singer', avatar: colors.forest, artist: true },
+  { id: 'jennifer-hernandez', name: 'Jennifer Hernandez', initials: 'JH', role: 'Dancer', avatar: colors.olive, artist: true },
+  { id: 'jessica-tibbits', name: 'Jessica Tibbits', initials: 'JT', role: 'Dancer', avatar: colors.ink, artist: true },
+  { id: 'nona', name: 'Nona', initials: 'N', role: 'Musician', avatar: colors.forest, artist: true },
 ];
 
 export type TeamMember = { person: string; part: string };

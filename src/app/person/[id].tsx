@@ -167,7 +167,7 @@ function DemoPerson({ id }: { id: string }) {
             <Text style={styles.name} accessibilityRole="header">
               {person.name}
             </Text>
-            <Pill label={`${person.role} · Nexus`} bg={colors.lime} fg={colors.ink} />
+            <Pill label={person.artist ? person.role : `${person.role} · Nexus`} bg={colors.lime} fg={colors.ink} />
           </View>
         </View>
         {person.bio ? <Text style={styles.bio}>{person.bio}</Text> : null}
@@ -189,7 +189,7 @@ function DemoPerson({ id }: { id: string }) {
       </View>
 
       <View style={{ padding: 20, gap: 12 }}>
-        <SectionTitle>Worked on</SectionTitle>
+        {worked.length ? <SectionTitle>Worked on</SectionTitle> : null}
         {worked.map((w, i) => (
           <Rise key={w.workId} delay={i * 70}>
             <Tap
